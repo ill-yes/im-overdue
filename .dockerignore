@@ -1,0 +1,38 @@
+# Explicit allowlist: personal databases, .env, backups, outputs and local tools
+# never enter the build context. Tests are needed by the build's typecheck.
+**
+!package.json
+!package-lock.json
+!LICENSE
+!NOTICE
+!COMMERCIAL-LICENSE.md
+!CONTRIBUTING.md
+!tsconfig.json
+!tsconfig.server.json
+!vite.config.ts
+!vitest.config.ts
+!playwright.config.ts
+!index.html
+!src/
+!src/**
+!server/
+!server/**
+!shared/
+!shared/**
+!tests/
+!tests/**
+!docker/
+!docker/**
+!examples/
+!examples/activities.json
+!examples/activities.csv
+
+# Never include credentials or SQLite artifacts nested in source/test folders.
+**/.env
+**/.env.*
+**/*.sqlite
+**/*.sqlite-wal
+**/*.sqlite-shm
+**/*.sqlite-journal
+**/*.pem
+**/*.key

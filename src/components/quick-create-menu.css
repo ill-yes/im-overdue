@@ -1,0 +1,36 @@
+.quick-create-root { position: fixed; z-index: 90; font-size: 12px; color: #304840; }
+.quick-create-panel { border: 1px solid #cbd9d0; border-radius: 8px; background: #fff; box-shadow: 0 8px 28px #19392a26, 0 2px 6px #19392a12; max-height: var(--quick-create-max-height); }
+.quick-create-main { display: flex; flex-direction: column; gap: 11px; padding: 13px; overflow-y: auto; }
+.quick-create-heading { display: flex; align-items: center; justify-content: space-between; gap: 7px; min-height: 28px; }
+.quick-create-heading > strong { font-size: 12px; }
+.quick-create-heading .icon-button { width: 28px; height: 28px; flex: none; }
+.quick-create-summary { display: flex; flex-direction: column; gap: 4px; color: #64776d; line-height: 1.45; font-variant-numeric: tabular-nums; }
+.quick-create-summary > strong { color: #304840; font-size: 12px; }
+.quick-create-summary b { color: #386c58; }
+.quick-create-title { gap: 5px; font-size: 11px; }
+.quick-create-title input { min-height: 36px; padding: 8px 9px; font-size: 12px; width: 100%; }
+.quick-create-note { margin: -3px 0 0; font-size: 11px; color: #64776d; white-space: pre-wrap; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.quick-create-trigger { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: 36px; padding: 8px 9px; border: 1px solid #dce5df; border-radius: 5px; background: #f8faf8; color: #456958; text-align: left; font-size: 12px; font-weight: 700; }
+.quick-create-trigger:hover, .quick-create-trigger[aria-expanded='true'] { background: #eaf4ee; border-color: #b4cfc0; }
+.quick-create-save { width: 100%; justify-content: center; min-height: 36px; }
+.quick-create-details, .quick-create-back { border: 0; background: none; color: #567769; font-size: 11px; padding: 5px 2px; }
+.quick-create-details { text-align: center; min-height: 28px; }
+.quick-create-back { display: flex; align-items: center; gap: 4px; min-height: 28px; }
+.quick-create-hint, .quick-create-error { margin: 0; line-height: 1.5; font-size: 11px; overflow-wrap: anywhere; }
+.quick-create-hint { color: #64776d; }
+.quick-create-error { color: #a54332; background: #fff2eb; padding: 8px; border-radius: 4px; }
+.quick-create-list { position: absolute; width: 320px; padding: 12px; display: flex; flex-direction: column; gap: 9px; }
+.quick-create-search { display: flex; align-items: center; flex: none; gap: 7px; border: 1px solid #ccd8cf; border-radius: 5px; padding: 0 8px; color: #638073; }
+.quick-create-search input { min-width: 0; width: 100%; min-height: 36px; border: 0; background: transparent; font-size: 12px; }
+.quick-create-entries { min-height: 0; overflow-y: auto; overscroll-behavior: contain; max-height: 330px; padding-right: 2px; }
+.quick-create-group + .quick-create-group { margin-top: 12px; }
+.quick-create-group h3 { margin: 0; padding: 6px 3px; font-size: 10px; font-weight: 800; color: #708075; border-bottom: 1px solid #e7ede7; }
+.quick-create-group ul { margin: 0; padding: 0; list-style: none; }
+.quick-create-choice { width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-height: 38px; border: 0; border-bottom: 1px solid #edf1eb; background: transparent; color: #304840; text-align: left; padding: 9px 5px; border-radius: 3px; }
+.quick-create-choice:hover, .quick-create-choice:focus-visible { background: #eaf4ee; }
+.quick-create-choice strong { font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+.quick-create-choice span { white-space: pre-wrap; overflow-wrap: anywhere; color: #718177; font-size: 11px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.quick-create-choice small { font-size: 10px; color: #78877e; }
+.quick-create-empty { padding: 8px 3px; margin: 0; font-size: 11px; line-height: 1.5; color: #78877e; }
+.quick-create-inline .quick-create-list { position: static; width: 100%; }
+@media (max-width: 760px) { .quick-create-choice, .quick-create-trigger, .quick-create-back, .quick-create-details { min-height: 40px; } }

@@ -1,0 +1,17 @@
+.auth-shell { min-height: 100dvh; }
+.auth-header { height: 72px; padding: 0 32px; display: flex; align-items: center; border-bottom: 1px solid #dce3de; background: white; }
+.auth-main { min-height: calc(100dvh - 72px); display: grid; place-items: start center; padding: clamp(64px, 15vh, 160px) 20px 48px; }
+.auth-panel { width: 100%; max-width: 380px; }
+.auth-panel h1 { margin: 0 0 10px; font-size: 32px; font-weight: 800; letter-spacing: -1.3px; line-height: 1.2; }
+.auth-description { margin: 0 0 32px; color: #63796e; font-size: 14px; line-height: 1.6; }
+.auth-panel .field { font-size: 12px; gap: 9px; }
+.auth-panel .field input { min-height: 46px; font-size: 16px; }
+.auth-submit { width: 100%; margin-top: 20px; height: 44px; font-size: 13px; }
+.auth-panel .form-error { margin: 14px 0 0; }
+.auth-submit .spinner { border-color: #ffffff66; border-top-color: white; }
+.auth-status { display: flex; align-items: center; gap: 10px; margin-top: 24px; color: #63796e; font-size: 13px; }
+@media (max-width: 760px) {
+  .auth-header { height: 60px; padding: 0 20px; }
+  .auth-main { min-height: calc(100dvh - 60px); padding-top: 72px; }
+  .auth-panel h1 { font-size: 29px; }
+}

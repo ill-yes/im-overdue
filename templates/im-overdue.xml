@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Container version="2">
+  <Name>im-overdue</Name>
+  <Repository>ghcr.io/ill-yes/im-overdue:latest</Repository>
+  <Registry>https://github.com/ill-yes/im-overdue/pkgs/container/im-overdue</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/ill-yes/im-overdue/issues</Support>
+  <Project>https://github.com/ill-yes/im-overdue</Project>
+  <Overview>Personal time account with calendar evidence imports, working-time entries, leave tracking and reports. Single-user password login; all application data stays in a local SQLite database. No external service credentials or automatic time tracking. Configure the exact browser-facing app URL and a private password before starting.</Overview>
+  <Category>Productivity:</Category>
+  <WebUI>http://[IP]:[PORT:4317]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/ill-yes/im-overdue/main/templates/im-overdue.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/ill-yes/im-overdue/main/icon.png</Icon>
+  <ReadMe>https://raw.githubusercontent.com/ill-yes/im-overdue/main/README.md</ReadMe>
+  <ExtraSearchTerms>time tracking overtime calendar work hours leave self hosted</ExtraSearchTerms>
+  <Requires>A dedicated appdata directory containing only im-overdue.sqlite and its SQLite WAL/SHM files. Root initializes only these paths, then the app runs as PUID/PGID. HTTP is unencrypted; use HTTPS at a reverse proxy for remote access. When using HTTPS, also set the advanced WebUI field to the same configured app URL. See the deployment guide.</Requires>
+  <Config Name="WebUI Port" Target="4317" Default="4317" Mode="tcp" Description="HTTP port. Include the published host port in App URL." Type="Port" Display="always" Required="true" Mask="false"/>
+  <Config Name="Appdata" Target="/data" Default="/mnt/user/appdata/im-overdue" Mode="rw" Description="Dedicated directory for this app only. Do not map the appdata parent. Files get private permissions and PUID/PGID ownership." Type="Path" Display="always" Required="true" Mask="false"/>
+  <Config Name="App URL" Target="IM_OVERDUE_ORIGIN" Default="" Description="Required exact browser address, e.g. http://192.168.1.20:4317 or https://time.example.net. No path or trailing slash. HTTPS requires the reverse proxy to preserve Host and the advanced WebUI field to match." Type="Variable" Display="always" Required="true" Mask="false"/>
+  <Config Name="Password" Target="IM_OVERDUE_PASSWORD" Default="" Description="Required unique password: 12-256 characters, at most 1024 UTF-8 bytes. Change here and restart to replace it and invalidate all sessions. Stored in Unraid's container configuration." Type="Variable" Display="always" Required="true" Mask="true"/>
+  <Config Name="PUID" Target="PUID" Default="99" Description="Non-root numeric user ID after initialization; Unraid nobody is 99." Type="Variable" Display="advanced" Required="true" Mask="false"/>
+  <Config Name="PGID" Target="PGID" Default="100" Description="Non-root numeric group ID after initialization; Unraid users is 100." Type="Variable" Display="advanced" Required="true" Mask="false"/>
+</Container>

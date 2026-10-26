@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CommunityApplications>
+  <Profile>im-overdue is a self-hosted personal time account with calendar evidence imports, working-time entries and reports. One password-protected container serves the UI, API and SQLite database. This repository contains the source and Unraid template. Use GitHub Issues for support.</Profile>
+  <Icon>https://raw.githubusercontent.com/ill-yes/im-overdue/main/icon.png</Icon>
+  <WebPage>https://github.com/ill-yes/im-overdue</WebPage>
+  <Forum>https://github.com/ill-yes/im-overdue/issues</Forum>
+</CommunityApplications>

@@ -1,0 +1,33 @@
+.vacation-account { min-width: 0; }
+.vacation-account-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 17px; }
+.vacation-year-label { display: flex; align-items: center; gap: 8px; color: #607568; font-size: 12px; }
+.vacation-year-label select { padding: 6px 9px; border: 1px solid #ccd8cf; border-radius: 5px; background: #fff; color: #304840; font-size: 12px; font-weight: 800; }
+.vacation-account-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 14px 0; border-top: 1px solid #e3e9e3; border-bottom: 1px solid #e3e9e3; }
+.vacation-account-stats > div { display: flex; flex-direction: column; gap: 6px; padding: 0 14px; border-left: 1px solid #e3e9e3; }
+.vacation-account-stats > div:first-child { padding-left: 0; border-left: 0; }
+.vacation-account-stats span { font-size: 12px; color: #6b7f72; }
+.vacation-account-stats strong { font-size: 17px; color: #2b5744; font-variant-numeric: tabular-nums; }
+.vacation-account-stats .negative { color: #a64830; }
+.vacation-allowance-form { margin-top: 19px; }
+.vacation-allowance-form fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.vacation-allowance-form legend { margin-bottom: 12px; padding: 0; color: #304840; font-size: 14px; font-weight: 800; }
+.vacation-account .small { font-size: 12px; line-height: 1.65; }
+.vacation-account .field { font-size: 12px; }
+.vacation-account .field input { font-size: 14px; }
+.vacation-account-notice { margin: 12px 0; padding: 9px 11px; border: 1px solid #e9d6ad; border-radius: 5px; background: #fff9ec; color: #785824; }
+.vacation-allowance-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.vacation-saved { color: #2b654d; }
+.vacation-account-list { margin-top: 22px; }
+.vacation-account-list h3 { margin: 0 0 7px; font-size: 14px; }
+.vacation-account-list ul { margin: 0; padding: 0; list-style: none; }
+.vacation-account-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid #e8ece6; }
+.vacation-account-list li > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.vacation-account-list li strong { color: #304840; font-size: 14px; line-height: 1.5; }
+.vacation-account-list li span { color: #6b7f72; font-size: 12px; }
+.vacation-account-list li button { flex: none; }
+@media (max-width: 430px) {
+  .vacation-account-stats > div { padding: 0 8px; }
+  .vacation-account-stats strong { font-size: 14px; }
+  .vacation-account-stats span { line-height: 1.4; }
+  .vacation-allowance-form .form-grid { grid-template-columns: 1fr; gap: 10px; }
+}

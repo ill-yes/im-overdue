@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "activities": [
+    { "source": "google_calendar", "id": "demo-calendar:weekly", "start": "2026-09-28T09:00:00+02:00", "end": "2026-09-28T09:45:00+02:00", "title": "Demo: Wochenplanung", "url": null },
+    { "source": "slack", "id": "demo-workspace:dev:001", "start": "2026-09-28T08:18:00+02:00", "end": null, "title": "Demo: Tagesplanung im Team geteilt", "url": null },
+    { "source": "github", "id": "demo-repo:commit:001", "start": "2026-09-28T11:42:00+02:00", "end": null, "title": "Demo: Kalender-Komponente erstellt", "url": null },
+    { "source": "slack", "id": "demo-workspace:dev:002", "start": "2026-09-28T15:12:00+02:00", "end": null, "title": "Demo: Review-Rueckmeldung gesendet", "url": null },
+    { "source": "google_calendar", "id": "demo-calendar:design", "start": "2026-09-29T10:00:00+02:00", "end": "2026-09-29T11:00:00+02:00", "title": "Demo: Design-Abstimmung", "url": null },
+    { "source": "github", "id": "demo-repo:commit:002", "start": "2026-09-29T14:36:00+02:00", "end": null, "title": "Demo: Importvalidierung ergaenzt", "url": null },
+    { "source": "google_calendar", "id": "demo-calendar:pairing", "start": "2026-09-30T13:00:00+02:00", "end": "2026-09-30T14:30:00+02:00", "title": "Demo: Gemeinsames Debugging", "url": null },
+    { "source": "slack", "id": "demo-workspace:dev:003", "start": "2026-10-01T08:31:00+02:00", "end": null, "title": "Demo: Projektstand gesendet", "url": null },
+    { "source": "slack", "id": "demo-workspace:dev:004", "start": "2026-10-01T08:35:00+02:00", "end": null, "title": "Demo: Rueckfrage beantwortet", "url": null },
+    { "source": "google_calendar", "id": "demo-calendar:sync", "start": "2026-10-01T09:00:00+02:00", "end": "2026-10-01T09:30:00+02:00", "title": "Demo: Team Sync", "url": null },
+    { "source": "github", "id": "demo-repo:commit:003", "start": "2026-10-01T16:04:00+02:00", "end": null, "title": "Demo: Tests fuer Zeitkonto", "url": null },
+    { "source": "other", "id": "demo:note:001", "start": "2026-10-02T11:15:00+02:00", "end": null, "title": "Demo: Dokumentation bearbeitet", "url": null },
+    { "source": "google_calendar", "id": "demo-calendar:retro", "start": "2026-10-02T15:00:00+02:00", "end": "2026-10-02T16:00:00+02:00", "title": "Demo: Wochenrueckblick", "url": null }
+  ]
+}

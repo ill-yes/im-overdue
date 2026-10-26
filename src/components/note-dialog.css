@@ -1,0 +1,67 @@
+.note-dialog-content {
+  min-width: 0;
+}
+
+.note-period {
+  margin: 0 0 7px;
+  color: #304840;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.note-explanation {
+  margin: 0 0 16px;
+}
+
+.note-field {
+  margin-bottom: 6px;
+}
+
+.note-textarea {
+  display: block;
+  width: 100%;
+  min-height: 168px;
+  padding: 10px 11px;
+  border: 1px solid #ccd8cf;
+  border-radius: 5px;
+  background: #fff;
+  color: #233b31;
+  font-size: 12px;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.note-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px 12px;
+  margin-top: 6px;
+}
+
+.note-meta > span:first-child {
+  min-width: 0;
+}
+
+.note-counter {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.note-warning {
+  margin: 14px 0 0;
+  padding: 9px 11px;
+  border: 1px solid #e9d6ad;
+  border-radius: 5px;
+  background: #fff9ec;
+  color: #785824;
+}
+
+@media (max-width: 430px) {
+  .note-meta {
+    flex-wrap: wrap;
+  }
+}

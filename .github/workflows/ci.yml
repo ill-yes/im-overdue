@@ -1,0 +1,51 @@
+name: Checks
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  application:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: Validate Unraid XML
+        run: python3 -c "import xml.etree.ElementTree as E; E.parse('templates/im-overdue.xml'); E.parse('ca_profile.xml')"
+      - name: Validate Compose
+        env:
+          IM_OVERDUE_ORIGIN: http://localhost:4317
+          IM_OVERDUE_PASSWORD: ci-validation-only
+        run: docker compose config --quiet
+  container:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [linux/amd64, linux/arm64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          load: true
+          push: false
+          tags: im-overdue:test
+      - name: Container smoke tests (arm64 uses QEMU on this runner)
+        run: npm run test:container -- im-overdue:test

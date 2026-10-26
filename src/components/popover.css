@@ -1,0 +1,8 @@
+.workspace-popover { position: fixed; z-index: 65; width: max-content; min-width: 210px; max-width: min(340px, calc(100vw - 16px)); max-height: calc(100dvh - 24px); overflow: auto; padding: 6px; border: 1px solid #d4dfd9; border-radius: 9px; background: white; box-shadow: 0 8px 28px #20333324; color: #203333; font-size: 13px; }
+.workspace-popover.is-menu > button, .workspace-popover.is-menu > a { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 38px; padding: 9px 10px; border: 0; border-radius: 5px; background: transparent; text-align: left; text-decoration: none; font: inherit; color: inherit; }
+.workspace-popover.is-menu > button:hover, .workspace-popover.is-menu > a:hover { background: #edf5f0; }
+.workspace-popover .source-filters { padding: 5px; display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+.workspace-popover .source-filter { font-size: 12px; padding: 9px 10px; }
+.workspace-popover .source-filter input { width: 15px; height: 15px; }
+.workspace-popover .popover-caption { margin: 4px 7px 8px; font-size: 12px; color: #61766b; }
+@media(max-width:760px) { .workspace-popover.is-menu > button, .workspace-popover.is-menu > a { min-height: 44px; } }

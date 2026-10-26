@@ -1,0 +1,19 @@
+.week-close-period { margin: 0 0 7px; color: #304840; font-size: 13px; font-weight: 800; }
+.week-close-notice { margin: 13px 0; padding: 10px 11px; border: 1px solid #e9d6ad; border-radius: 5px; background: #fff9ec; color: #785824; }
+.week-close-notice strong { display: block; margin-bottom: 4px; }
+.week-close-updated { color: #476e5a; }
+.week-close-loading { margin: 15px 0; color: #677b6f; }
+.week-close-load-error { margin: 14px 0; }
+.week-close-load-error .form-error { margin-bottom: 9px; }
+.week-close-days { margin-top: 16px; border-top: 1px solid #e3e9e3; }
+.week-close-day { padding: 12px 0; border-bottom: 1px solid #e3e9e3; }
+.week-close-day > div { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.week-close-day h3 { margin: 0; color: #304840; font-size: 12px; line-height: 1.5; }
+.week-close-day button { flex: none; }
+.week-close-day ul { display: grid; gap: 6px; margin: 9px 0 0; padding-left: 17px; color: #677b6f; font-size: 12px; line-height: 1.5; }
+.week-close-day li small { display: block; color: #76857c; }
+.week-close-clear { margin: 16px 0; color: #2b654d; }
+.week-close-ack { display: flex; align-items: flex-start; gap: 9px; margin: 17px 0 0; color: #304840; font-size: 12px; font-weight: 750; line-height: 1.5; }
+.week-close-ack input { flex: none; margin: 3px 0 0; accent-color: #26705a; }
+.week-close-ack small { display: block; margin-top: 3px; color: #677b6f; font-size: 11px; font-weight: 500; }
+@media (max-width: 430px) { .week-close-day > div { align-items: flex-start; } }

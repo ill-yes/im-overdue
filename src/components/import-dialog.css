@@ -1,0 +1,489 @@
+.modal.imp-dialog {
+  width: min(960px, 100%);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 88dvh;
+}
+.imp-dialog .modal-header { flex: none; }
+.imp-content {
+  padding-top: 15px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  flex: 1;
+}
+.imp-content > section > .imp-footer {
+  position: sticky;
+  bottom: -22px;
+  z-index: 3;
+  padding: 13px 22px;
+  margin: 20px -22px -22px;
+  border-top: 1px solid #e6e9e4;
+  background: #fff;
+}
+.imp-steps {
+  display: flex;
+  gap: 0;
+  list-style: none;
+  margin: 0 0 21px;
+  padding: 0;
+  border-bottom: 1px solid #e4e9e2;
+}
+.imp-steps li {
+  padding: 0 18px 11px 0;
+  margin-right: 22px;
+  color: #8a978e;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+}
+.imp-assignments { display: grid; gap: 10px; margin: 18px 0; }
+.imp-assignment {
+  display: grid;
+  grid-template-columns: minmax(110px, .8fr) minmax(0, 1.5fr) auto;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid #e4e9e2;
+  border-radius: 5px;
+  padding: 12px;
+  min-width: 0;
+}
+.imp-assignment-label strong, .imp-assignment-label small { display: block; overflow-wrap: anywhere; }
+.imp-assignment-label strong { font-size: 12px; }
+.imp-assignment-label small { margin-top: 4px; font-size: 11px; color: #738479; }
+.imp-assignment .field { min-width: 0; margin: 0; }
+.imp-assignment select, .imp-assignment input { width: 100%; min-width: 0; }
+.imp-create-link { border: 0; background: transparent; color: #246f5b; font-size: 11px; font-weight: 750; padding: 5px 0; text-decoration: underline; text-underline-offset: 3px; }
+.imp-create-source { grid-column: 1 / -1; border-top: 1px solid #e4e9e2; padding-top: 12px; min-width: 0; }
+.imp-create-source .dialog-actions { margin-top: 10px; }
+.imp-steps li.current {
+  color: #176e60;
+  border-color: #176e60;
+}
+.imp-step-title {
+  font-size: 16px;
+  letter-spacing: -0.025em;
+  margin: 0 0 6px;
+  outline: none;
+}
+.imp-input-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 18px 0 0;
+  border-bottom: 1px solid #e4e9e2;
+}
+.imp-input-modes button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 0 9px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #74877b;
+  font-size: 12px;
+  font-weight: 700;
+}
+.imp-input-modes button.selected { color: #176e60; border-bottom-color: #176e60; }
+.imp-paste-input { margin-top: 15px; }
+.imp-content .imp-file:focus-within { outline: 2px solid #176e60; outline-offset: 3px; }
+.imp-content .file-drop {
+  margin: 18px 0 9px;
+}
+.imp-file.imp-dragging {
+  background: #e9f5ed;
+  border-color: #559f78;
+}
+.imp-example {
+  display: flex;
+  align-items: center;
+  gap: 7px 13px;
+  flex-wrap: wrap;
+  margin: 0 0 17px;
+  color: #87968a;
+  font-size: 11px;
+}
+.imp-example button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: transparent;
+  padding: 4px 0;
+  color: #246f5b;
+  font-size: 11px;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.imp-content .preview {
+  border-top: 0;
+  padding-top: 0;
+  margin-top: 0;
+}
+.imp-content .preview-stats {
+  margin: 13px 0;
+}
+.imp-content .preview-stats span {
+  min-height: 50px;
+}
+.imp-evidence {
+  border: 1px solid #e4e9e2;
+  border-radius: 5px;
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  margin: 12px 0;
+}
+.imp-evidence > div {
+  padding: 10px 12px;
+  min-width: 0;
+}
+.imp-evidence > div + div {
+  border-left: 1px solid #e4e9e2;
+}
+.imp-evidence small {
+  display: block;
+  font-size: 10px;
+  color: #829087;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.imp-evidence strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.imp-filter-note {
+  color: #835d24;
+  background: #fff8e8;
+  border: 1px solid #eedfbd;
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin: 11px 0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.imp-table-wrap {
+  border: 1px solid #e4e9e2;
+  border-radius: 5px;
+  max-height: 365px;
+  overflow: auto;
+  margin-top: 12px;
+}
+.imp-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 11px;
+  table-layout: fixed;
+}
+.imp-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f7f9f5;
+}
+.imp-table th,
+.imp-table td {
+  border-bottom: 1px solid #e8ede7;
+  padding: 9px 8px;
+  vertical-align: top;
+  min-width: 0;
+}
+.imp-table th {
+  color: #738479;
+  font-size: 10px;
+  font-weight: 800;
+}
+.imp-table th:nth-child(1) {
+  width: 93px;
+}
+.imp-table th:nth-child(2) {
+  width: 135px;
+}
+.imp-table th:nth-child(3) {
+  width: 175px;
+}
+.imp-table th:nth-child(5) {
+  width: 105px;
+}
+.imp-table td strong,
+.imp-table td small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.imp-table td small {
+  color: #819088;
+  font-size: 10px;
+  margin-top: 2px;
+}
+.imp-table td.imp-title {
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+.imp-status {
+  display: inline-block;
+  border-radius: 3px;
+  padding: 3px 5px;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.imp-status-new {
+  background: #e6f3e9;
+  color: #2e7652;
+}
+.imp-status-updated {
+  background: #f9efdc;
+  color: #916823;
+}
+.imp-status-unchanged {
+  background: #ecefeb;
+  color: #69786e;
+}
+.imp-diff-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #246f5b;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 800;
+}
+.imp-diff-toggle[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+.imp-diff > td {
+  background: #f7faf7;
+}
+.imp-diff-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  padding: 10px;
+}
+.imp-diff-grid > div {
+  min-width: 0;
+}
+.imp-diff-grid > div + div {
+  border-left: 1px solid #e6ebe5;
+  padding-left: 12px;
+}
+.imp-diff-grid > div > strong {
+  font-size: 10px;
+  color: #677c70;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.imp-fields {
+  margin: 7px 0 0;
+}
+.imp-fields > div {
+  padding: 4px 0;
+  border-top: 1px solid #eef1ed;
+}
+.imp-fields dt {
+  font-size: 9px;
+  color: #849087;
+}
+.imp-fields dd {
+  margin: 1px 0 0;
+  font-size: 10px;
+  color: #31463a;
+  overflow-wrap: anywhere;
+}
+.imp-break {
+  word-break: break-all;
+}
+.imp-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 10px 0;
+  color: #75867a;
+  font-size: 11px;
+}
+.imp-pagination > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.imp-pagination .button {
+  height: 29px;
+  font-size: 10px;
+}
+.imp-empty {
+  padding: 16px;
+  background: #f7f9f5;
+  color: #879489;
+  font-size: 12px;
+  border-radius: 4px;
+}
+.imp-result {
+  min-height: 260px;
+}
+.imp-result-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #e5f4e8;
+  color: #287653;
+  margin: 17px 0 11px;
+}
+.imp-result > p {
+  font-size: 13px;
+  color: #4a6253;
+  line-height: 1.5;
+}
+.imp-result .dialog-actions {
+  margin-top: 26px;
+}
+.imp-mobile-label {
+  display: none;
+}
+.imp-cell-value {
+  display: block;
+  min-width: 0;
+}
+@media (max-width: 760px) {
+  .imp-steps { justify-content: space-between; gap: 6px; }
+  .imp-steps li { margin-right: 0; padding-right: 0; font-size: 10px; }
+  .imp-assignment { grid-template-columns: minmax(0, 1fr); gap: 9px; }
+  .imp-assignment-label { display: flex; justify-content: space-between; gap: 8px; }
+  .imp-assignment-label small { margin-top: 0; }
+  .imp-create-link { justify-self: start; }
+  .imp-content .preview-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .imp-table-wrap {
+    max-height: 48vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  .imp-table,
+  .imp-table tbody {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+  .imp-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .imp-table tbody tr[data-import-row] {
+    display: block;
+    margin: 8px;
+    border: 1px solid #e4e9e2;
+    border-radius: 5px;
+    padding: 6px 9px;
+    min-width: 0;
+  }
+  .imp-table tbody tr[data-import-row] td {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    align-items: start;
+    gap: 7px;
+    padding: 4px 0;
+    border: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .imp-mobile-label {
+    display: block;
+    color: #738479;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.4;
+  }
+  .imp-table td strong,
+  .imp-table td small {
+    white-space: normal;
+    text-overflow: clip;
+    overflow: visible;
+    overflow-wrap: anywhere;
+  }
+  .imp-table td.imp-title {
+    overflow-wrap: anywhere;
+  }
+  .imp-cell-value {
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+  .imp-table tbody tr.imp-diff {
+    display: block;
+    margin: -9px 8px 8px;
+    border: 1px solid #e4e9e2;
+    border-top: 0;
+    border-radius: 0 0 5px 5px;
+    min-width: 0;
+  }
+  .imp-table tbody tr.imp-diff td {
+    display: block;
+    padding: 9px;
+    min-width: 0;
+  }
+  .imp-diff-grid {
+    display: block;
+    padding: 0;
+  }
+  .imp-diff-grid > div + div {
+    border-left: 0;
+    border-top: 1px solid #e6ebe5;
+    padding: 9px 0 0;
+    margin-top: 9px;
+  }
+  .imp-evidence {
+    grid-template-columns: 1fr;
+  }
+  .imp-evidence > div + div {
+    border-left: 0;
+    border-top: 1px solid #e4e9e2;
+  }
+  .imp-pagination {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 500px) {
+  .modal.imp-dialog { max-height: calc(100dvh - 24px); }
+  .imp-content > section > .imp-footer { padding: 12px 16px; margin: 20px -16px -16px; bottom: -16px; }
+  .imp-steps li {
+    margin-right: 0;
+    padding-right: 0;
+    font-size: 10px;
+  }
+  .imp-content .dialog-actions {
+    justify-content: stretch;
+  }
+  .imp-content .dialog-actions .button {
+    flex: 1;
+  }
+  .imp-content .dialog-actions .push-left {
+    flex-basis: 100%;
+  }
+  .imp-example {
+    gap: 4px 10px;
+  }
+  .imp-example span {
+    width: 100%;
+  }
+}
