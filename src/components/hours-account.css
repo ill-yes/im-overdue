@@ -1,0 +1,36 @@
+.hours-account { min-width: 0; }
+.hours-account h3 { margin: 0; font-size: 14px; }
+.hours-account h4 { margin: 0 0 12px; font-size: 13px; }
+.hours-account fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.hours-account-balance { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; padding: 4px 0 17px; border-bottom: 1px solid #dce5df; }
+.hours-account-balance > div > span { font-size: 12px; color: #587264; }
+.hours-account-balance > div > strong { display: block; margin: 7px 0; font-size: 32px; letter-spacing: -.04em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.hours-account-balance p { max-width: 48ch; margin: 0; font-size: 11px; color: #728176; line-height: 1.5; }
+.hours-account-balance dl { display: flex; flex-direction: column; justify-content: center; gap: 12px; margin: 0; }
+.hours-account-balance dl > div { display: flex; gap: 14px; justify-content: space-between; }
+.hours-account-balance dt { font-size: 12px; color: #61776a; }
+.hours-account-balance dd { margin: 0; font-size: 14px; font-weight: 750; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.hours-account-notice { padding: 9px 11px; color: #785824; background: #fff9ec; border: 1px solid #e9d6ad; border-radius: 5px; font-size: 12px; line-height: 1.5; }
+.hours-account-opening { border-bottom: 1px solid #e3e9e3; padding: 17px 0 12px; }
+.hours-account-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin: 16px 0 4px; }
+.hours-account-opening-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 17px 0; border-bottom: 1px solid #e3e9e3; }
+.hours-account-opening-summary p { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 7px 0 0; color: #61776a; font-size: 12px; }
+.hours-account-opening-summary strong { color: #304840; font-variant-numeric: tabular-nums; }
+.hours-account-opening-summary .button { white-space: normal; text-align: right; flex-shrink: 0; }
+.hours-account-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: end; }
+.hours-account-fields .button { height: auto; min-height: 36px; white-space: normal; }
+.hours-account-ledger-heading { margin: 20px 0 13px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.hours-account-editor { background: #f6faf7; border: 1px solid #cddfd3; padding: 14px; border-radius: 6px; margin: 12px 0; }
+.hours-account-ledger { margin: 0; padding: 0; list-style: none; }
+.hours-account-ledger li { padding: 12px 0; border-bottom: 1px solid #e6ebe5; display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; }
+.hours-account-entry { grid-column: 1 / -1; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.hours-account-entry > span { display: flex; flex-wrap: wrap; align-items: baseline; gap: 7px 12px; min-width: 0; }
+.hours-account-entry strong { font-size: 13px; }
+.hours-account-entry small { color: #728176; font-size: 11px; }
+.hours-account-entry b { font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hours-account-ledger li > p { font-size: 12px; line-height: 1.5; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.hours-account-ledger .is-excluded { background: #fafbf9; }
+.hours-account-entry-actions { display: flex; align-items: start; gap: 2px; }
+.hours-account-entry-actions .button { height: 28px; min-height: 28px; font-size: 11px; padding: 0 7px; }
+.hours-account :is(button, input, select, textarea):focus-visible { outline: 3px solid #8ec9bb; outline-offset: 2px; }
+@media(max-width: 600px) { .hours-account-balance { grid-template-columns: 1fr; gap: 18px; }.hours-account-fields { grid-template-columns: 1fr 1fr; }.hours-account-fields > :last-child:nth-child(3) { grid-column: 1 / -1; }.hours-account-ledger li { grid-template-columns: 1fr; }.hours-account-entry-actions { justify-content: flex-end; }.hours-account-entry-actions .button { min-height: 36px; }.hours-account-balance > div > strong { font-size: 30px; } }

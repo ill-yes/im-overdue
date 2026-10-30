@@ -144,6 +144,7 @@ test.describe.serial('personal local time-account workflow', () => {
     await page.getByRole('dialog', { name: 'Woche abschließen', exact: true }).getByRole('button', { name: 'Woche abschließen', exact: true }).click();
     await expect(page.locator('.status-pill')).toHaveText('Abgeschlossen');
     await page.getByRole('navigation', { name: 'Hauptnavigation' }).getByRole('link', { name: 'Zeitkonto', exact: true }).click();
+    await page.getByRole('tab', { name: 'Auswertungen', exact: true }).click();
     await expect(page.locator('.reports-confirmed')).toContainText('1 abgeschlossene Woche');
     await page.getByRole('button', { name: 'Quartal', exact: true }).click();
     await expect(page.locator('.period-nav:visible')).toContainText('2026');
@@ -317,6 +318,7 @@ test.describe.serial('personal local time-account workflow', () => {
       await chooseWeek(page, '2026-06-01');
       await expect(page.locator('.week-identity')).toContainText('01.06.2026');
       await page.getByRole('navigation', { name: 'Hauptnavigation' }).getByRole('link', { name: 'Zeitkonto', exact: true }).click();
+      await page.getByRole('tab', { name: 'Auswertungen', exact: true }).click();
       await expect(page.locator('.period-nav:visible')).toContainText('Juni 2026');
     } finally { await context.close(); }
   });

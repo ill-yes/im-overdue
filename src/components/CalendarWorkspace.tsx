@@ -5,16 +5,17 @@ import { useMemo, type Ref } from 'react';
 import { ArrowDownToLine, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Filter, ListChecks, Maximize2, Minimize2, MoreHorizontal, Palmtree, Plus, StickyNote, Undo2 } from 'lucide-react';
 import { Calendar, type CalendarProps } from '../Calendar';
 import { MonthCalendar } from '../MonthCalendar';
-import { periodSummary, weekTotals } from '../../shared/calculations.js';
+import { dayAccounting, periodSummary, weekTotals } from '../../shared/calculations.js';
 import { intersectsRange, toActivityInterval, toInstantRange } from '../../shared/activities.js';
 import { monthOverview } from '../../shared/month.js';
 import { noteText } from '../../shared/notes.js';
-import { addDays, dayBounds, periodBounds, Temporal, weekStartFor } from '../../shared/time.js';
+import { addDays, datesInRange, dayBounds, periodBounds, Temporal, weekStartFor } from '../../shared/time.js';
 import { type Activity, type NoteScope } from '../../shared/types.js';
 import { duration, periodLabel, weekLabel } from '../format';
 import { DayReview } from './DayReview';
 import { Popover } from './Popover';
 import type { TimesheetPreset } from './TimesheetDialog';
+import { absenceSummaryMessages } from '../locales/absence-summary.js';
 
 type CalendarView = 'week' | 'month';
 type CalendarActions = {
@@ -55,6 +56,7 @@ type CalendarWorkspaceProps = {
 /** Calendar presentation and derived summaries; sessions and writes stay in App. */
 export function CalendarWorkspace({ anchorDate, view, currentDay, entryDate, reviewDate, closed, focused, gestureActive, reviewToggle, vacationToggle, focusToggle, calendar, actions }: CalendarWorkspaceProps) {
   const { t, language } = useMessages(calendarMessages);
+  const { t: a } = useMessages(absenceSummaryMessages);
   const { active = true, state, weekStart: week, enabledSources: sources, busy, quickDraft: quickCreate,
     onNew: openEditor, onReviewDay: openReview, onVacation: openVacation } = calendar;
   const { navigate, movePeriod, setView, openReuse, toggleFocus, openReportsMonth, undoLastChange,
@@ -66,6 +68,19 @@ export function CalendarWorkspace({ anchorDate, view, currentDay, entryDate, rev
   }, [state, anchorDate]);
   const month = useMemo(() => view === 'month' ? monthOverview(state, anchorDate, sources) : null,
     [state, view, anchorDate, sources]);
+  const absenceTotals = useMemo(() => {
+    const range = view === 'week' ? { from: week, to: addDays(week, 7) } : periodBounds(anchorDate, 'month');
+    return datesInRange(range.from, range.to).reduce((sum, date) => {
+      const day = dayAccounting(state, date);
+      return { holiday: sum.holiday + day.holidayMinutes, sickness: sum.sickness + day.sicknessMinutes,
+        compensation: sum.compensation + day.compensationMinutes };
+    }, { holiday: 0, sickness: 0, compensation: 0 });
+  }, [state, week, anchorDate, view]);
+  const absenceTotalItems = (Object.keys(absenceTotals) as (keyof typeof absenceTotals)[])
+    .filter(key => absenceTotals[key] > 0);
+  const absenceSummary = absenceTotalItems.length > 0 && <div className="summary-item summary-absence-totals">
+    {absenceTotalItems.map(key => <span key={key}>{a(key)} <strong>{duration(absenceTotals[key])}</strong></span>)}
+  </div>;
   const weeklyNote = noteText(state.notes, 'week', week);
   const future = week > weekStartFor(currentDay);
   const activityCount = useMemo(() => {
@@ -104,12 +119,14 @@ export function CalendarWorkspace({ anchorDate, view, currentDay, entryDate, rev
           <div className="summary-item"><span>{t('work')}</span><strong>{duration(totals.actualMinutes)}</strong></div>
           <div className="summary-item"><span>{t('target')}</span><strong>{duration(totals.targetMinutes)}</strong></div>
           {totals.vacationMinutes > 0 && <div className="summary-item"><span>{t('vacation')}</span><strong>{duration(totals.vacationMinutes)}</strong></div>}
+          {absenceSummary}
           <div className="summary-item"><span>{t('weeklyBalance')} <small>{closed ? t('closedLower') : t('provisionalLower')}</small></span><strong className={totals.balanceMinutes < 0 ? 'negative' : 'positive'}>{duration(totals.balanceMinutes, true)}</strong></div>
           <button className="summary-item summary-link" aria-label={t('openMonthBalance')} onClick={openReportsMonth}><span>{periodLabel(anchorDate, 'month')} · {t('confirmedLower')} <ChevronRight size={12} /></span><strong className={report?.confirmed.balanceMinutes && report.confirmed.balanceMinutes < 0 ? 'negative' : 'positive'}>{report?.confirmed.days ? duration(report.confirmed.balanceMinutes, true) : '—'}</strong></button>
         </section> : month && <section className="summary-strip" aria-label={t('monthlySummary')}>
           <div className="summary-item"><span>{t('workingTime')}</span><strong>{duration(month.actualMinutes)}</strong></div>
           <button className="summary-item summary-link" onClick={openReportsMonth}><span>{t('confirmedBalance')} <ChevronRight size={12} /></span><strong className={month.summary.confirmed.balanceMinutes < 0 ? 'negative' : 'positive'}>{month.summary.confirmed.days ? duration(month.summary.confirmed.balanceMinutes, true) : '—'}</strong></button>
           <div className="summary-item"><span>{t('provisionalBalance')}</span><strong className={month.summary.provisional.balanceMinutes < 0 ? 'negative' : 'positive'}>{month.summary.provisional.days ? duration(month.summary.provisional.balanceMinutes, true) : '—'}</strong></div>
+          {absenceSummary}
           <div className="summary-item"><span>{t('openWeeks')}</span><strong>{month.summary.provisional.weeks.length}</strong></div>
         </section>}
         <section className="calendar-section">
@@ -124,7 +141,7 @@ export function CalendarWorkspace({ anchorDate, view, currentDay, entryDate, rev
                 </div>
               </Popover>
               <Popover label={t('moreActions')} trigger={<MoreHorizontal size={19} />} className="icon-button" menu>
-                {view === 'week' && <><button role="menuitem" ref={vacationToggle} onClick={() => openVacation(entryDate)}><Palmtree size={16} />{t('addVacation')}</button><button role="menuitem" onClick={() => openNote('week', week)}><StickyNote size={16} />{weeklyNote ? t('editWeekNote') : t('weekNote')}</button></>}
+                {view === 'week' && <><button role="menuitem" ref={vacationToggle} onClick={() => openVacation(entryDate)}><Palmtree size={16} />{a('absences')}</button><button role="menuitem" onClick={() => openNote('week', week)}><StickyNote size={16} />{weeklyNote ? t('editWeekNote') : t('weekNote')}</button></>}
                 <button role="menuitem" onClick={() => openTimesheet(view === 'week' ? { kind: 'week', from: week, to: addDays(week, 7) } : { kind: 'month', ...periodBounds(anchorDate, 'month') })}><ArrowDownToLine size={16} />{t('timesheet')}</button>
               </Popover>
               {view === 'week' && <button className={`button close-week-button ${closed ? 'quiet' : 'secondary'}`} disabled={busy || (!closed && future)} title={!closed && future ? t('futureWeek') : undefined} onClick={setWeekStatus}>{closed ? t('reopenWeek') : t('closeWeek')}</button>}
@@ -137,10 +154,10 @@ export function CalendarWorkspace({ anchorDate, view, currentDay, entryDate, rev
               {reviewDate && <DayReview state={state} date={reviewDate} enabledSources={sources} busy={busy} onSelectDay={openReview} onShowActivity={showActivity} onNew={() => openEditor(reviewDate)} onNote={() => openNote('day', reviewDate)} onVacation={date => openVacation(date)} onClose={closeReview} />}
               <div className="review-calendar"><Calendar {...calendar} /></div>
             </div>
-            <div className="calendar-footer"><span><i className="legend-mark evidence" />{t('evidenceLegend')}</span><span><i className="legend-mark tracked" />{t('workLegend')}</span><span>{activityCount ? t(activityCount === 1 ? 'weekEvidenceOne' : 'weekEvidenceMany', { count: activityCount }) : t('noWeekEvidence')}</span></div>
-          </> : month && <><MonthCalendar overview={month} notes={state.notes} vacations={state.vacations} today={currentDay} onSelectDay={openDay} /><div className="calendar-footer"><span>{t('confirmedHint')}</span><span>{t(month.activityCount === 1 ? 'monthEvidenceOne' : 'monthEvidenceMany', { count: month.activityCount })}</span></div></>}
+            <div className="calendar-footer"><span><i className="legend-mark evidence" />{t('evidenceLegend')}</span><span><i className="legend-mark tracked" />{a('workLegend')}</span><span>{activityCount ? t(activityCount === 1 ? 'weekEvidenceOne' : 'weekEvidenceMany', { count: activityCount }) : t('noWeekEvidence')}</span></div>
+          </> : month && <><MonthCalendar state={state} overview={month} notes={state.notes} vacations={state.vacations} today={currentDay} onSelectDay={openDay} /><div className="calendar-footer"><span>{t('confirmedHint')}</span><span>{t(month.activityCount === 1 ? 'monthEvidenceOne' : 'monthEvidenceMany', { count: month.activityCount })}</span></div></>}
         </section>
-        <p className="footnote">{t('footnote')}</p>
+        <p className="footnote">{a('footnote')}</p>
       </>}
     </section>
   );

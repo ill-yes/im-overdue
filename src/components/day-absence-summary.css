@@ -1,0 +1,24 @@
+.day-absence-summary, .day-absence-items { display: block; min-width: 0; }
+.day-absence-items { display: grid; gap: 4px; }
+.day-absence-item {
+  display: block;
+  padding: 3px 5px;
+  border-left: 2px solid #c4d9cd;
+  border-radius: 3px;
+  background: #eef6f0;
+  color: #38654f;
+  font-size: 10px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.day-absence-label { font-weight: 750; }
+.day-absence-detail { display: block; font-size: 9px; font-weight: 450; }
+.day-absence-item.is-vacation { border-color: #d9c38b; background: #fff8e6; color: #806224; }
+.day-absence-item.is-sickness { border-color: #b4cbd8; background: #eff5f8; color: #486c80; }
+.day-absence-item.is-compensation { border-color: #c6bdda; background: #f4f1f8; color: #6b5a86; }
+.day-absence-item.is-review { border-color: #d9c38b; background: #fff8e6; color: #806224; }
+.calendar-workspace .summary-strip { flex-wrap: wrap; }
+.calendar-workspace .summary-absence-totals { display: flex; flex-wrap: wrap; gap: 5px 12px; }
+.summary-absence-totals > span { display: inline-flex; align-items: baseline; gap: 5px; font-size: 10px; color: #738078; }
+.calendar-workspace .summary-absence-totals strong { font-size: 13px; color: #38654f; }

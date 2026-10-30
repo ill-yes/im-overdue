@@ -1,4 +1,4 @@
-import { targetForDay } from './calculations.js';
+import { dayAccounting } from './calculations.js';
 import { today } from './time.js';
 import type { AppState, VacationAccount, VacationDay } from './types.js';
 
@@ -11,7 +11,7 @@ export function vacationAccount(state: AppState, year: number, asOf = today(stat
   let takenDays = 0;
   let plannedDays = 0;
   for (const vacation of state.vacations) {
-    if (Number(vacation.date.slice(0, 4)) !== year || targetForDay(vacation.date, state.profiles) <= 0) continue;
+    if (Number(vacation.date.slice(0, 4)) !== year || dayAccounting(state, vacation.date).vacationMinutes <= 0) continue;
     if (vacation.date <= asOf) takenDays += vacation.fraction;
     else plannedDays += vacation.fraction;
   }

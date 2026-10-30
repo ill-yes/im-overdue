@@ -340,3 +340,8 @@
     max-height: 320px;
   }
 }
+
+.dr-absences { margin: 10px 15px 0; }
+.dr-absences:has(.day-absence-items:empty) { display: none; }
+.dr-absences .day-absence-item { font-size: 11px; padding: 5px 7px; }
+.dr-absences .day-absence-detail { font-size: 10px; }

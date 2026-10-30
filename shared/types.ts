@@ -29,6 +29,18 @@ export type VacationFraction = 0.5 | 1;
 export interface VacationDay { date: string; fraction: VacationFraction }
 export interface VacationChange { date: string; fraction: VacationFraction | null }
 export interface VacationAllowance { year: number; entitlementDays: number; carryoverDays: number }
+export interface AccountOpening { date: string; minutes: number }
+export interface AccountEntry { id: string; date: string; kind: 'payout' | 'correction'; minutes: number; reason: string }
+export type AccountEntryInput = Omit<AccountEntry, 'id'>;
+export type CompensationAmount = { mode: 'fraction'; value: VacationFraction } | { mode: 'minutes'; value: number };
+export interface AbsenceDay { date: string; sickness: boolean; compensation: CompensationAmount | null }
+export interface AbsenceChange extends AbsenceDay { vacationFraction: VacationFraction | 0 }
+export const GERMAN_STATES = ['BW', 'BY', 'BE', 'BB', 'HB', 'HH', 'HE', 'MV', 'NI', 'NW', 'RP', 'SL', 'SN', 'ST', 'SH', 'TH'] as const;
+export type GermanState = (typeof GERMAN_STATES)[number];
+export interface HolidayProfile { id: string; effectiveFrom: string; region: GermanState | null; ruleVersion: 1 }
+/** A null name explicitly excludes a regional holiday on this date. */
+export interface HolidayOverride { date: string; name: string | null }
+export interface ResolvedHoliday { date: string; name: string; nameEn: string; source: 'manual' | 'regional' }
 export interface Settings { timezone: string }
 export interface AppState {
   dataSources: DataSource[];
@@ -44,6 +56,12 @@ export interface AppState {
   notes: CalendarNote[];
   vacations: VacationDay[];
   vacationAllowances: VacationAllowance[];
+  /** Optional only for older snapshots/model inputs; the current API always includes these fields. */
+  accountOpening?: AccountOpening | null;
+  accountEntries?: AccountEntry[];
+  absences?: AbsenceDay[];
+  holidayProfiles?: HolidayProfile[];
+  holidayOverrides?: HolidayOverride[];
 }
 export interface BlockInput { start: string; end: string; note: string; title?: string; rememberTemplate?: boolean }
 export interface MutationGuard { expectedRevision: number; confirmReopen?: boolean }
@@ -83,6 +101,39 @@ export interface ImportPreview {
   errors: (MessageProblem & { row?: number })[];
 }
 export interface DayTotals { actualMinutes: number; vacationMinutes: number; targetMinutes: number; balanceMinutes: number }
+export interface DayAccounting extends DayTotals {
+  holiday: ResolvedHoliday | null;
+  holidayMinutes: number;
+  sicknessMinutes: number;
+  compensationRequestedMinutes: number;
+  compensationMinutes: number;
+  uncoveredMinutes: number;
+  vacationFraction: VacationFraction | 0;
+}
+export interface AccountSummary {
+  opening: AccountOpening | null;
+  asOf: string;
+  confirmedMinutes: number | null;
+  closedMinutes: number;
+  entryMinutes: number;
+  provisionalMinutes: number;
+  plannedCompensationMinutes: number;
+  plannedEntryMinutes: number;
+  excludedEntries: AccountEntry[];
+}
+export interface AccountMovement { date: string; kind: 'opening' | 'work' | 'payout' | 'correction'; minutes: number; reason: string }
+export interface AccountPeriod {
+  opening: AccountOpening | null;
+  from: string;
+  to: string;
+  asOf: string;
+  startMinutes: number | null;
+  endMinutes: number | null;
+  provisionalMinutes: number;
+  plannedCompensationMinutes: number;
+  plannedEntryMinutes: number;
+  movements: AccountMovement[];
+}
 export interface PeriodPart extends DayTotals { days: number; weeks: string[] }
 export interface PeriodSummary { confirmed: PeriodPart; provisional: PeriodPart }
 
@@ -115,6 +166,7 @@ export interface TimesheetDay {
   vacationFraction: VacationFraction | 0;
   dayNote: string;
   weekNote: string;
+  accounting?: DayAccounting;
 }
 export interface TimesheetSnapshot {
   revision: number;
@@ -124,6 +176,7 @@ export interface TimesheetSnapshot {
   to: string;
   days: TimesheetDay[];
   summary: PeriodSummary;
+  account?: AccountPeriod;
 }
 export interface TimesheetOptions {
   includeTitles: boolean;
@@ -132,4 +185,5 @@ export interface TimesheetOptions {
   includeWeekNotes: boolean;
   closedOnly: boolean;
   name: string;
+  includeAccount?: boolean;
 }

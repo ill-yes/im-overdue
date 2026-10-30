@@ -106,7 +106,7 @@ test('CSV uses BOM and semicolon quoting, safe text cells, one numeric row per d
   expect([...bytes.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
   const rows = csvRows(bytes);
   expect(rows).toHaveLength(10);
-  expect(rows[0]).toEqual(['Name', 'Datum', 'Status', 'Ist (Minuten)', 'Urlaub (Minuten)', 'Soll (Minuten)', 'Saldo (Minuten)', 'Arbeitszeiten', 'Titel', 'Blocknotizen', 'Tagesnotiz', 'Wochennotiz']);
+  expect(rows[0]).toEqual(['Name', 'Datum', 'Status', 'Ist (Minuten)', 'Urlaub (Minuten)', 'Soll (Minuten)', 'Saldo (Minuten)', 'Arbeitszeiten', 'Titel', 'Blocknotizen', 'Tagesnotiz', 'Wochennotiz', 'Feiertag (Minuten)', 'Krankheit (Minuten)', 'Freizeitausgleich (Minuten)', 'Ungedeckt (Minuten)']);
   const monday = rows.find(row => row[1] === '2026-09-28')!;
   expect(monday[0]).toBe("' +Name; \"Test\"");
   expect(monday.slice(3, 7)).toEqual(['120', '0', '480', '-360']);

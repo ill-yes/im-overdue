@@ -23,6 +23,16 @@ Prüfe die Einstellungen, erfasse einen Arbeitstag und schließe fertige Wochen 
 [Wochen abschließen und Salden verstehen](usage.md#wochen-abschließen-und-salden-lesen) ·
 [Stundenzettel exportieren](usage.md#stundenzettel-exportieren)
 
+### ⚖️ Konto und Abwesenheiten verwalten
+
+Starte ein laufendes Stundenkonto, erfasse Auszahlungen und Korrekturen und
+kombiniere Urlaub, Freizeitausgleich und Krankheit mit den für dich geltenden Feiertagen.
+
+[Stundenkonto einrichten](usage.md#stundenkonto) ·
+[Abwesenheiten erfassen](usage.md#abwesenheiten) ·
+[Feiertage einrichten](usage.md#feiertage) ·
+[Feiertagsregeln und Geltungsbereich](../holiday-rules.md)
+
 ### 🔌 Aktivitätsimporte vorbereiten
 
 Übernimm Kalender-, Slack- oder GitHub-Belege aus deinem eigenen Exporter in benannte Quellen.
@@ -43,4 +53,6 @@ Starte das Projekt, lerne seine Grenzen kennen und prüfe deine Änderungen.
 
 - **Browseradresse abgewiesen?** Prüfe die [genau konfigurierte Origin](docker.md#mit-compose-starten).
 - **Datenverzeichnis beim Start abgewiesen?** Prüfe [erlaubte Dateien und Rechte](docker.md#persistente-daten-und-rechte).
-- **Stundenzettel leer?** Prüfe [Zeitraum und Filter für abgeschlossene Wochen](usage.md#stundenzettel-exportieren).
+- **Kein bestätigter Kontostand?** Lege einen wirksamen [Anfangsbestand](usage.md#stundenkonto) fest.
+- **Unerwartete Feiertags- oder Abwesenheitsgutschrift?** Prüfe die [Tagesreihenfolge](usage.md#abwesenheiten) und [Feiertagsausnahmen](usage.md#feiertage).
+- **Stundenzettel leer?** Prüfe [Zeitraum, Abschlussfilter und optionalen Kontoteil](usage.md#stundenzettel-exportieren).

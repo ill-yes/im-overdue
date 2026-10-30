@@ -1,4 +1,4 @@
-import type { Activity, AppState, BlockInput, DataPage, ImportAnalysis, ImportInput, ImportPackage, ImportPackagePage, ImportPreview, NoteScope, ReusableInput, Source, TimesheetSnapshot, VacationAllowance, VacationChange, WeekReview } from '../shared/types.js';
+import type { AbsenceChange, AccountEntryInput, AccountOpening, Activity, AppState, BlockInput, DataPage, GermanState, ImportAnalysis, ImportInput, ImportPackage, ImportPackagePage, ImportPreview, NoteScope, ReusableInput, Source, TimesheetSnapshot, VacationAllowance, VacationChange, WeekReview } from '../shared/types.js';
 import { localized, type MessageParams, type Messages } from '../shared/i18n.js';
 
 const networkMessages = {
@@ -106,6 +106,14 @@ export const api = {
   setWeek: (weekStart: string, status: 'open' | 'closed', revision: number, confirmCurrent = false, confirmWarnings = false, reviewKey?: string) => request<AppState>(`/api/weeks/${weekStart}`, 'POST', { status, expectedRevision: revision, confirmCurrent, confirmWarnings, reviewKey }),
   weekReview: (weekStart: string) => request<WeekReview>(`/api/weeks/${weekStart}/review`),
   saveVacations: (days: VacationChange[], revision: number, confirmReopen = false) => request<AppState>('/api/vacations', 'PUT', { days, expectedRevision: revision, confirmReopen }),
+  saveAbsences: (days: AbsenceChange[], revision: number, confirmReopen = false) => request<AppState>('/api/absences', 'PUT', { days, expectedRevision: revision, confirmReopen }),
+  saveAccountOpening: (input: AccountOpening, revision: number) => request<AppState>('/api/account/opening', 'PUT', { ...input, expectedRevision: revision }),
+  saveAccountEntry: (id: string | null, input: AccountEntryInput, revision: number) => request<AppState>(id ? `/api/account/entries/${encodeURIComponent(id)}` : '/api/account/entries', id ? 'PUT' : 'POST', { ...input, expectedRevision: revision }),
+  deleteAccountEntry: (id: string, revision: number) => request<AppState>(`/api/account/entries/${encodeURIComponent(id)}`, 'DELETE', { expectedRevision: revision }),
+  saveHolidayProfile: (input: { effectiveFrom: string; region: GermanState | null }, revision: number, confirmReopen = false) => request<AppState>('/api/holiday-profiles', 'POST', { ...input, expectedRevision: revision, confirmReopen }),
+  deleteHolidayProfile: (id: string, revision: number, confirmReopen = false) => request<AppState>(`/api/holiday-profiles/${encodeURIComponent(id)}`, 'DELETE', { expectedRevision: revision, confirmReopen }),
+  saveHolidayOverride: (input: { date: string; name: string | null }, revision: number, confirmReopen = false) => request<AppState>(`/api/holiday-overrides/${input.date}`, 'PUT', { name: input.name, expectedRevision: revision, confirmReopen }),
+  deleteHolidayOverride: (date: string, revision: number, confirmReopen = false) => request<AppState>(`/api/holiday-overrides/${date}`, 'DELETE', { expectedRevision: revision, confirmReopen }),
   saveVacationAllowance: (input: VacationAllowance, revision: number) => request<AppState>(`/api/vacation-allowances/${String(input.year).padStart(4, '0')}`, 'PUT', { entitlementDays: input.entitlementDays, carryoverDays: input.carryoverDays, expectedRevision: revision }),
   timesheet: (from: string, to: string) => request<TimesheetSnapshot>(`/api/timesheet?${new URLSearchParams({ from, to })}`),
   saveNote: (scope: NoteScope, date: string, text: string, revision: number) => request<AppState>(`/api/notes/${scope}/${encodeURIComponent(date)}`, 'PUT', { text, expectedRevision: revision }),

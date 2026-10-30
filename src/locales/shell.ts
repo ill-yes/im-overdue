@@ -248,6 +248,8 @@ export const shellMessages = {
     "en": "Leave change undone.",
     "de": "Urlaubsänderung rückgängig gemacht."
   },
+  "undoAbsencesChanged": { "en": "Absences changed", "de": "Abwesenheiten geändert" },
+  "undoAbsences": { "en": "Absence change undone.", "de": "Abwesenheitsänderung rückgängig gemacht." },
   "undoTemplate": {
     "en": " The template remembered with this change was also removed.",
     "de": " Die dabei neu gemerkte Vorlage wurde ebenfalls zurückgenommen."
@@ -437,11 +439,12 @@ const undoKeys = {
   'Urlaub entfernt': 'undoLeaveRemoved',
   'Urlaub eingetragen': 'undoLeaveAdded',
   'Urlaub geändert': 'undoLeaveChanged',
+  'Abwesenheiten geändert': 'undoAbsencesChanged',
 } as const;
 export function undoLabel(label: string, language: Language): string {
   const key = undoKeys[label as keyof typeof undoKeys];
   return key ? translate(shellMessages, key, {}, language) : label;
 }
 export function undoIsVacation(label: string): boolean {
-  return label === 'Urlaub entfernt' || label === 'Urlaub eingetragen' || label === 'Urlaub geändert';
+  return label === 'Urlaub entfernt' || label === 'Urlaub eingetragen' || label === 'Urlaub geändert' || label === 'Abwesenheiten geändert';
 }

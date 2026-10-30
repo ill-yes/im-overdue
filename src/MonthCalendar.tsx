@@ -4,9 +4,10 @@ import { calendarMessages } from './locales/calendar.js';
 import type { MonthOverview } from '../shared/month.js';
 import { StickyNote } from 'lucide-react';
 import { noteText } from '../shared/notes.js';
-import type { CalendarNote, Source, VacationDay } from '../shared/types.js';
+import type { AppState, CalendarNote, Source, VacationDay } from '../shared/types.js';
 import { duration, longDate, sourceLabel } from './format.js';
 import './month-calendar.css';
+import { DayAbsenceSummary, dayAbsenceItems } from './components/DayAbsenceSummary.js';
 
 function dayNumber(date: string): string {
   return String(Number(date.slice(8, 10)));
@@ -19,14 +20,15 @@ function sourceDots(sources: Source[]) {
 
 export interface MonthCalendarProps {
   overview: MonthOverview;
+  state?: AppState;
   notes: CalendarNote[];
   vacations?: VacationDay[];
   today: string;
   onSelectDay: (date: string) => void;
 }
 
-export function MonthCalendar({ overview, notes, vacations = [], today, onSelectDay }: MonthCalendarProps) {
-  const { t, locale } = useMessages(calendarMessages);
+export function MonthCalendar({ overview, state, notes, vacations = [], today, onSelectDay }: MonthCalendarProps) {
+  const { t, locale, language } = useMessages(calendarMessages);
   const weekdays = useMemo(() => {
     const formatter = new Intl.DateTimeFormat(locale, { weekday: 'long', timeZone: 'UTC' });
     return Array.from({ length: 7 }, (_, index) => formatter.format(new Date(Date.UTC(2024, 0, 1 + index))));
@@ -52,7 +54,9 @@ export function MonthCalendar({ overview, notes, vacations = [], today, onSelect
             const hasNote = Boolean(noteText(notes, 'day', day.date));
             const vacation = vacations.find((item) => item.date === day.date);
             const vacationLabel = vacation?.fraction === 0.5 ? t('halfVacation') : t('vacation');
-            const label = `${longDate(day.date)}, ${t(`status.${day.status}`)}. ${vacation ? t('work') : t('actual')} ${actual}, ${t('target')} ${duration(day.totals.targetMinutes)}${vacation ? `, ${vacationLabel}, ${t('vacation')} +${duration(day.totals.vacationMinutes)}` : ''}, ${t('dailyBalance')} ${balance}. ${activityLabel(day.activityCount)}${sources ? t('fromSources', { sources }) : ''}.${hasNote ? ` ${t('noteExists')}.` : ''} ${t('openWeek')}`;
+            const absenceItems = state ? dayAbsenceItems(state, day.date, language) : [];
+            const absenceLabel = absenceItems.map(item => `${item.label}: ${item.detail}`).join('. ');
+            const label = `${longDate(day.date)}, ${t(`status.${day.status}`)}. ${vacation ? t('work') : t('actual')} ${actual}, ${t('target')} ${duration(day.totals.targetMinutes)}${state ? (absenceLabel ? `, ${absenceLabel}` : '') : vacation ? `, ${vacationLabel}, ${t('vacation')} +${duration(day.totals.vacationMinutes)}` : ''}, ${t('dailyBalance')} ${balance}. ${activityLabel(day.activityCount)}${sources ? t('fromSources', { sources }) : ''}.${hasNote ? ` ${t('noteExists')}.` : ''} ${t('openWeek')}`;
             return (
               <button
                 className={`mo-day${day.inMonth ? '' : ' mo-day-outside'}${day.isWeekend ? ' mo-day-weekend' : ''}${day.date === today ? ' mo-day-today' : ''}`}
@@ -80,7 +84,8 @@ export function MonthCalendar({ overview, notes, vacations = [], today, onSelect
                     {t('target')} <strong>{duration(day.totals.targetMinutes)}</strong>
                   </span>
                 </span>
-                {vacation && <span className="mo-day-vacation"><span>{vacationLabel}</span> +{duration(day.totals.vacationMinutes)}</span>}
+                {state && absenceItems.length > 0 && <DayAbsenceSummary state={state} date={day.date} items={absenceItems} />}
+                {!state && vacation && <span className="mo-day-vacation"><span>{vacationLabel}</span> +{duration(day.totals.vacationMinutes)}</span>}
                 <span
                   className={`mo-day-balance${!untouched && day.totals.balanceMinutes < 0 ? ' mo-day-negative' : ''}`}
                 >

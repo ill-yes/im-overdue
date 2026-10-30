@@ -1,6 +1,19 @@
 import type { MessageParams, MessageProblem, Messages } from './i18n.js';
 
 export const serverMessages = {
+  "error.account.minutes": { en: "Minutes must be a whole number between -1,000,000,000 and 1,000,000,000.", de: "Minuten müssen eine ganze Zahl zwischen -1.000.000.000 und 1.000.000.000 sein." },
+  "error.account.zero": { en: "An account entry must have a non-zero duration.", de: "Eine Kontobuchung benötigt eine Dauer ungleich null." },
+  "error.account.kind": { en: "Choose payout or correction; payouts require negative minutes.", de: "Auszahlung oder Korrektur wählen; Auszahlungen benötigen negative Minuten." },
+  "error.account.reason": { en: "The reason must contain 1 to 500 characters.", de: "Die Begründung muss 1 bis 500 Zeichen enthalten." },
+  "error.account.opening": { en: "Set an opening balance before adding entries, and use a date on or after it.", de: "Zuerst einen Anfangssaldo setzen und Buchungen frühestens ab diesem Datum erfassen." },
+  "error.account.notFound": { en: "Account entry not found.", de: "Kontobuchung nicht gefunden." },
+  "error.absence.days": { en: "Provide 1 to 366 unique absence dates within 366 calendar days.", de: "1 bis 366 eindeutige Abwesenheitstage innerhalb von 366 Kalendertagen angeben." },
+  "error.absence.value": { en: "Invalid absence combination or compensation amount.", de: "Ungültige Abwesenheitskombination oder ungültiger Freizeitausgleich." },
+  "error.absence.target": { en: "New absences require a positive daily target.", de: "Neue Abwesenheiten benötigen ein positives Tagessoll." },
+  "error.holiday.region": { en: "Choose a German state or disable regional holidays.", de: "Ein deutsches Bundesland wählen oder regionale Feiertage deaktivieren." },
+  "error.holiday.name": { en: "The holiday name must contain 1 to 160 characters, or be null to exclude it.", de: "Der Feiertagsname muss 1 bis 160 Zeichen enthalten, oder null zum Ausschließen sein." },
+  "error.holiday.notFound": { en: "Holiday profile not found.", de: "Feiertagsprofil nicht gefunden." },
+
   "error.auth.required": { en: "Please sign in.", de: "Bitte anmelden." },
   "error.auth.invalid": { en: "Incorrect password.", de: "Das Passwort ist nicht korrekt." },
   "error.auth.limited": { en: "Too many login attempts. Please try again later.", de: "Zu viele Anmeldeversuche. Bitte später erneut versuchen." },

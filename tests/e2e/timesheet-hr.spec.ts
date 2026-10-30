@@ -22,6 +22,7 @@ async function open(page: Page, date: string) {
   await page.reload();
   await chooseWeek(page, date);
   await page.getByRole('navigation', { name: 'Hauptnavigation' }).getByRole('link', { name: 'Zeitkonto', exact: true }).click();
+  await page.getByRole('tab', { name: 'Auswertungen', exact: true }).click();
   await page.getByRole('region', { name: 'Zeitkonto', exact: true }).getByRole('button', { name: 'Stundenzettel', exact: true }).click();
   await loaded(page);
 }
@@ -115,7 +116,7 @@ test('partial custom periods count excluded calendar days and share the same con
   const before = await getState(page);
   await expect(dialog(page)).toContainText('2 nicht abgeschlossene Tage ausgeblendet');
   await expect(report(page).locator('tbody tr')).toHaveCount(5);
-  await expect(report(page).locator('tfoot th')).toHaveText(['Gesamt']);
+  await expect(report(page).locator('tfoot th')).toHaveText([/^Gesamt\s*Gutschriften: Urlaub 0:00 · Krankheit 0:00 · Feiertage 0:00$/]);
   await expect(report(page).locator('tfoot')).not.toContainText('Summe vorläufig');
   await expect(preview(page)).not.toContainText('Offener Teil');
   const rows = await csv(page);
@@ -143,7 +144,7 @@ test('closed March reference is a complete compact one-page A4 HR document at de
   await open(page, '2026-03-02');
   await dialog(page).getByRole('textbox', { name: /Name/ }).fill('Example Person');
   await expect(report(page).getByRole('heading', { name: 'Arbeitszeitnachweis', exact: true })).toBeVisible();
-  await expect(report(page).locator('thead th')).toHaveText(['Datum', 'Arbeitszeiten / Tätigkeit', 'Arbeit', 'Urlaub', 'Soll', 'Saldo']);
+  await expect(report(page).locator('thead th')).toHaveText(['Datum', 'Arbeitszeiten / Tätigkeit', 'Arbeit', 'Gutschriften', 'Soll', 'Saldo']);
   await expect(report(page).locator('tbody tr')).toHaveCount(31);
   await expect(report(page).locator('.timesheet-document-header')).toContainText('01.03.2026');
   await expect(report(page).locator('.timesheet-document-header')).toContainText('31.03.2026');

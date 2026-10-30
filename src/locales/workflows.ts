@@ -633,6 +633,7 @@ export const workflows = {
     "en": "Hours account",
     "de": "Stundenkonto"
   },
+  "periodReports": { "en": "Period reports", "de": "Auswertungen" },
   "period": {
     "en": "Period",
     "de": "Zeitraum"

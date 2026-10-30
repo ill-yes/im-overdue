@@ -1,0 +1,29 @@
+.absence-form { display: flex; flex-direction: column; min-height: 0; }
+.absence-fields { border: 0; min-width: 0; padding: 0; margin: 0; }
+.absence-dialog .field { font-size: 12px; }
+.absence-dialog :is(input, select) { font-size: 13px; }
+.absence-range { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.absence-bulk { background: #f5f9f6; border: 1px solid #dbe6de; border-radius: 6px; padding: 12px; margin-top: 15px; }
+.absence-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px 12px; align-items: end; }
+.absence-sickness { display: flex; align-items: center; gap: 7px; min-height: 34px; font-size: 12px; color: #405e4e; }
+.absence-sickness input, .absence-day-label > input { width: 16px; height: 16px; margin: 0; accent-color: #176e60; flex: none; }
+.absence-bulk-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.absence-pattern-help { margin: 10px 0 0; font-size: 12px; line-height: 1.5; color: #405e4e; }
+.absence-day-adjustment { margin: 0 0 9px 25px; font-size: 11px; color: #607568; }
+.absence-count { font-size: 12px; color: #607568; margin: 16px 0 8px; }
+.absence-days { min-height: 50px; border-top: 1px solid #dce6df; border-bottom: 1px solid #dce6df; }
+.absence-day { padding: 13px 3px; border-bottom: 1px solid #e5ebe6; }
+.absence-day:last-child { border: 0; }
+.absence-day-label { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
+.absence-day-label > span { display: flex; flex-direction: column; gap: 4px; }
+.absence-day-label strong { font-size: 13px; color: #304b3e; }
+.absence-day-label small { font-size: 11px; color: #6c8071; }
+.absence-day > .absence-controls { margin-left: 25px; }
+.absence-calculation { display: flex; gap: 8px 18px; flex-wrap: wrap; margin: 12px 0 0 25px; }
+.absence-calculation > div { min-width: 70px; }
+.absence-calculation dt { font-size: 10px; color: #718376; }
+.absence-calculation dd { font-size: 13px; font-variant-numeric: tabular-nums; font-weight: 750; margin: 4px 0 0; }
+.absence-notice { margin: 10px 0 0; padding: 8px 10px; border-left: 3px solid #d5b873; background: #fffbf1; color: #785824; font-size: 12px; line-height: 1.5; }
+.absence-day > .absence-notice { margin-left: 25px; }
+.absence-dialog :is(button, input, select):focus-visible { outline: 3px solid #8ec9bb; outline-offset: 2px; }
+@media (max-width: 480px) { .absence-controls { column-gap: 8px; }.absence-day > .absence-controls, .absence-calculation, .absence-day > .absence-notice, .absence-day-adjustment { margin-left: 0; }.absence-sickness { grid-column: 1 / -1; }.absence-dialog .dialog-actions .button { flex: 1; font-size: 12px; }.absence-bulk-actions .button { white-space: normal; height: auto; min-height: 36px; text-align: left; } }

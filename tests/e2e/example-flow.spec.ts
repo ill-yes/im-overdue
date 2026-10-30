@@ -65,6 +65,7 @@ test('published example: import, draw/edit, close, monthly/quarterly/yearly tota
   await expect(summary.locator('.summary-item').nth(3)).toContainText('+3 h');
   await page.screenshot({ path: testInfo.outputPath('example-desktop.png') });
   await page.getByRole('navigation', { name: 'Hauptnavigation' }).getByRole('link', { name: 'Zeitkonto', exact: true }).click();
+  await page.getByRole('tab', { name: 'Auswertungen', exact: true }).click();
   await expect(page.locator('.period-nav:visible')).toContainText('September 2026');
   await expect(page.locator('.reports-balance strong')).toHaveText('+3 h');
   await page.getByRole('button', { name: 'Nächster Zeitraum', exact: true }).click();
@@ -115,6 +116,7 @@ test('published example: import, draw/edit, close, monthly/quarterly/yearly tota
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.locator('.status-pill')).toHaveText('Vorläufig');
   await page.getByRole('navigation', { name: 'Hauptnavigation' }).getByRole('link', { name: 'Zeitkonto', exact: true }).click();
+  await page.getByRole('tab', { name: 'Auswertungen', exact: true }).click();
   await expect(page.locator('.reports-confirmed small')).toContainText('0 abgeschlossene Wochen');
   await page.locator('.reports-open-weeks summary').click();
   await expect(page.locator('.reports-open-weeks')).toContainText('28.09.2026');

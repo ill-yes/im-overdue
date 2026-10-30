@@ -12,6 +12,8 @@ import './settings-dialog.css';
 import { errorText, LanguageSelector, useMessages, type TextValue } from '../i18n';
 import { shellMessages } from '../locales/shell';
 import { dataSourceMessages } from '../locales/data-sources';
+import { accountingMessages } from '../locales/accounting';
+import { HolidaySettings } from './HolidaySettings';
 
 export function SettingsDialog({
   state,
@@ -28,6 +30,7 @@ export function SettingsDialog({
   onRenameSource,
   onDeleteSource,
   onOpenPeriod,
+  holidayActions,
 }: {
   state: AppState;
   busy: boolean;
@@ -43,13 +46,25 @@ export function SettingsDialog({
   onRenameSource: (id: string, name: string, expectedRevision: number) => Promise<boolean>;
   onDeleteSource: (id: string, expectedRevision: number) => Promise<boolean>;
   onOpenPeriod: (date: string, revealSourceId?: string) => void;
+  holidayActions: Pick<Parameters<typeof HolidaySettings>[0], 'onProfile' | 'onDeleteProfile' | 'onOverride' | 'onDeleteOverride'>;
 }) {
   const { t: sourceT } = useMessages(dataSourceMessages);
   const { t, m, text, language } = useMessages(shellMessages);
+  const { t: a } = useMessages(accountingMessages);
   const dayNames = language === 'de' ? ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const [tab, setTab] = useState<'general' | 'sources'>('general');
+  const [tab, setTab] = useState<'general' | 'sources' | 'holidays'>('general');
   const sourcesPanel = useRef<SourcesPanelHandle>(null);
+  const holidayDirty = useRef(false);
+  const holidayPending = useRef(false);
+  const [holidayReset, setHolidayReset] = useState(0);
+  const canLeaveHolidays = () => {
+    if (holidayPending.current) return false;
+    if (holidayDirty.current && !window.confirm(a('discard'))) return false;
+    if (holidayDirty.current) { holidayDirty.current = false; setHolidayReset(value => value + 1); }
+    return true;
+  };
   const close = () => {
+    if (tab === 'holidays' && !canLeaveHolidays()) return;
     if (sourcesPanel.current && !sourcesPanel.current.canLeave()) return;
     onClose();
   };
@@ -57,8 +72,9 @@ export function SettingsDialog({
     if (tab === 'sources' && sourcesPanel.current?.escape()) return;
     close();
   };
-  const chooseTab = (next: 'general' | 'sources') => {
+  const chooseTab = (next: 'general' | 'sources' | 'holidays') => {
     if (next === tab || pendingRef.current || (tab === 'sources' && !sourcesPanel.current?.canLeave())) return;
+    if (tab === 'holidays' && !canLeaveHolidays()) return;
     setTab(next);
   };
 
@@ -202,6 +218,7 @@ export function SettingsDialog({
       <div className="settings-tabs" role="tablist" aria-label={t('settings')}>
         <button role="tab" aria-selected={tab === 'general'} aria-controls="settings-general" id="settings-general-tab" onClick={() => chooseTab('general')}>{sourceT('general')}</button>
         <button role="tab" aria-selected={tab === 'sources'} aria-controls="settings-sources" id="settings-sources-tab" onClick={() => chooseTab('sources')}>{sourceT('dataSources')}</button>
+        <button role="tab" aria-selected={tab === 'holidays'} aria-controls="settings-holidays" id="settings-holidays-tab" onClick={() => chooseTab('holidays')}>{a('holidays')}</button>
       </div>
       <div className="dialog-content settings-general" role="tabpanel" aria-labelledby="settings-general-tab" id="settings-general" hidden={tab !== 'general'}>
         <section className="settings-section">
@@ -392,6 +409,12 @@ export function SettingsDialog({
       <div className="settings-sources" role="tabpanel" aria-labelledby="settings-sources-tab" id="settings-sources" hidden={tab !== 'sources'}>
         <SourcesPanel ref={sourcesPanel} state={state} busy={busy} active={tab === 'sources'} enabledSources={enabledSources} onClose={close} onAnalyze={onAnalyze} onPreview={onPreview} onCommit={onCommit} onCreateSource={onCreateSource} onRenameSource={onRenameSource} onDeleteSource={onDeleteSource} onOpenPeriod={onOpenPeriod} />
         {tab === 'sources' && requestError && <p className="settings-source-error form-error" role="alert">{text(requestError)}</p>}
+      </div>
+      <div className="dialog-content" role="tabpanel" aria-labelledby="settings-holidays-tab" id="settings-holidays" hidden={tab !== 'holidays'}>
+        <HolidaySettings key={holidayReset} state={state} busy={busy} {...holidayActions}
+          onDirtyChange={value => { holidayDirty.current = value; }} onPendingChange={value => { holidayPending.current = value; }} />
+        {tab === 'holidays' && requestError && <p className="form-error" role="alert">{text(requestError)}</p>}
+        <div className="dialog-actions"><button className="button secondary" onClick={close}>{t('close')}</button></div>
       </div>
     </Modal>
   );

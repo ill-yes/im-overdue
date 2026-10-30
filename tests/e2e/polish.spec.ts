@@ -210,7 +210,7 @@ test('settings lock their own pending request and restore the draft after failur
     await expect(page.getByLabel('Stunden pro Woche')).toBeDisabled();
     await expect(page.getByRole('button', { name: 'Arbeitszeit ab … ändern' })).toBeDisabled();
     await expect(page.getByRole('button', { name: 'Speichern …' })).toBeDisabled();
-    await page.getByRole('dialog').locator('form').dispatchEvent('submit');
+    await page.getByRole('dialog').locator('#settings-general form').dispatchEvent('submit');
     expect(requests).toBe(1);
     release();
     await expect(page.getByRole('dialog', { name: 'Einstellungen' }).getByRole('alert')).toContainText('Temporär nicht verfügbar');
@@ -240,7 +240,7 @@ test('settings show local success, guard no-ops and allow an equal future profil
   await settings.getByRole('checkbox', { name: 'Mo' }).check();
   await expect(settings.getByRole('button', { name: 'Sollprofil speichern' })).toBeDisabled();
   await page.getByLabel('Stunden pro Woche').press('Enter');
-  await settings.locator('form').dispatchEvent('submit');
+  await settings.locator('#settings-general form').dispatchEvent('submit');
   await settings.getByRole('button', { name: 'Speichern', exact: true }).dispatchEvent('click');
   const stillBefore = await getState(page);
   expect(writes).toBe(0);

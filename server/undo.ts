@@ -1,7 +1,8 @@
+import { writeAbsence } from './db.js';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseSync } from 'node:sqlite';
 import { Temporal, weekStartFor } from '../shared/time.js';
-import type { AppState, RecentEntry, VacationDay, WeekRecord, WorkBlock, WorkTemplate } from '../shared/types.js';
+import type { AbsenceDay, AppState, RecentEntry, VacationDay, WeekRecord, WorkBlock, WorkTemplate } from '../shared/types.js';
 import { REUSABLE_DURATION_MAX_MINUTES, REUSABLE_NOTE_MAX_LENGTH, REUSABLE_TITLE_MAX_LENGTH } from '../shared/reuse.js';
 
 const KEY = 'block_undo';
@@ -17,7 +18,7 @@ export type UndoEntry = (UndoBase & { version: 1 }) | (UndoBase & {
   version: 2;
   templates: Change<WorkTemplate>[];
   recentEntries: { before: RecentEntry[]; after: RecentEntry[] };
-}) | (UndoBase & { version: 3; vacations: Change<VacationDay>[] });
+}) | (UndoBase & { version: 3; vacations: Change<VacationDay>[] }) | (UndoBase & { version: 4; vacations: Change<VacationDay>[]; absences: Change<AbsenceDay>[] });
 
 function object(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -62,13 +63,21 @@ function validVacation(value: unknown, key: string): value is VacationDay {
   try { return Temporal.PlainDate.from(key).toString() === key; }
   catch { return false; }
 }
-function validChanges<T>(value: unknown, valid: (item: unknown, key: string) => item is T): value is Change<T>[] {
+function validAbsence(value: unknown, key: string): value is AbsenceDay {
+  if (!object(value) || value.date !== key || typeof value.sickness !== 'boolean' || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(key)) return false;
+  try { if (Temporal.PlainDate.from(key).toString() !== key) return false; } catch { return false; }
+  const c = value.compensation;
+  if (c === null) return value.sickness;
+  return object(c) && ((c.mode === 'fraction' && (c.value === 0.5 || c.value === 1)) ||
+    (c.mode === 'minutes' && Number.isInteger(c.value) && Number(c.value) >= 1 && Number(c.value) <= 10080));
+}
+function validChanges<T>(value: unknown, valid: (item: unknown, key: string) => item is T, allowEmpty = false): value is Change<T>[] {
   if (!Array.isArray(value)) return false;
   const keys = new Set<string>();
   for (const change of value) {
     if (!object(change) || typeof change.key !== 'string' || keys.has(change.key) || !('before' in change) || !('after' in change) ||
       (change.before !== null && !valid(change.before, change.key)) || (change.after !== null && !valid(change.after, change.key)) ||
-      (change.before === null && change.after === null)) return false;
+      (!allowEmpty && change.before === null && change.after === null)) return false;
     keys.add(change.key);
   }
   return true;
@@ -83,14 +92,25 @@ export function readUndo(db: DatabaseSync): UndoEntry | null {
   if (row.value.length > 4 * 1024 * 1024) return null;
   try {
     const value: unknown = JSON.parse(row.value);
-    if (!object(value) || (value.version !== 1 && value.version !== 2 && value.version !== 3) || typeof value.token !== 'string' || !/^[0-9a-f-]{36}$/.test(value.token) ||
-      !(value.version === 3 ? ['Urlaub eingetragen', 'Urlaub geändert', 'Urlaub entfernt'] : ['Arbeitszeit hinzugefügt', 'Arbeitszeit geändert', 'Arbeitszeit gelöscht']).includes(String(value.label)) ||
+    if (!object(value) || (value.version !== 1 && value.version !== 2 && value.version !== 3 && value.version !== 4) || typeof value.token !== 'string' || !/^[0-9a-f-]{36}$/.test(value.token) ||
+      !(value.version === 4 ? ['Abwesenheiten geändert'] : value.version === 3 ? ['Urlaub eingetragen', 'Urlaub geändert', 'Urlaub entfernt'] : ['Arbeitszeit hinzugefügt', 'Arbeitszeit geändert', 'Arbeitszeit gelöscht']).includes(String(value.label)) ||
       !Number.isSafeInteger(value.revision) || Number(value.revision) < 1 || !validChanges(value.blocks, validBlock) ||
-      !validChanges(value.weeks, validWeek) || (value.blocks as unknown[]).length > 32 || (value.weeks as unknown[]).length > (value.version === 3 ? 54 : 16) ||
+      !validChanges(value.weeks, validWeek) || (value.blocks as unknown[]).length > 32 || (value.weeks as unknown[]).length > (value.version === 3 || value.version === 4 ? 54 : 16) ||
       (value.version === 1 && (value.blocks as unknown[]).length === 0 && (value.weeks as unknown[]).length === 0)) return null;
     const blocks = (value.blocks as Change<WorkBlock>[]).map(c => ({ ...c, before: normalizeBlock(c.before), after: normalizeBlock(c.after) }));
     const base = { token: value.token, label: value.label, revision: value.revision, blocks, weeks: value.weeks } as UndoBase;
     if (value.version === 1) return { ...base, version: 1 };
+    if (value.version === 4) {
+      if (blocks.length || !validChanges(value.vacations, validVacation, true) || !validChanges(value.absences, validAbsence, true)) return null;
+      const dates = [...new Set([...value.vacations, ...value.absences].map(change => change.key))].sort();
+      if (!dates.length || dates.length > 366 || dates.some(date => !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date) || Temporal.PlainDate.from(date).toString() !== date) ||
+        Temporal.PlainDate.from(dates[0]).until(Temporal.PlainDate.from(dates[dates.length - 1])).days >= 366) return null;
+      if (value.vacations.length !== dates.length || value.absences.length !== dates.length ||
+        ![...value.vacations, ...value.absences].some(change => !same(change.before, change.after))) return null;
+      const affectedWeeks = new Set(dates.map(weekStartFor));
+      if (base.weeks.some(change => !affectedWeeks.has(change.key))) return null;
+      return { ...base, version: 4, vacations: value.vacations, absences: value.absences };
+    }
     if (value.version === 3) {
       if (blocks.length || !validChanges(value.vacations, validVacation) || !value.vacations.length || value.vacations.length > 366) return null;
       const dates = value.vacations.map(change => change.key).sort();
@@ -145,6 +165,17 @@ export function saveVacationUndo(db: DatabaseSync, before: AppState, after: AppS
   db.prepare('INSERT INTO meta(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run(KEY, JSON.stringify(entry));
 }
 
+export function saveAbsenceUndo(db: DatabaseSync, before: AppState, after: AppState): void {
+  const dates = [...new Set([...changed(before.vacations, after.vacations, day => day.date),
+    ...changed(before.absences ?? [], after.absences ?? [], day => day.date)].map(change => change.key))].sort();
+  if (!dates.length) return;
+  const vacations = dates.map(key => ({ key, before: before.vacations.find(day => day.date === key) ?? null, after: after.vacations.find(day => day.date === key) ?? null }));
+  const absences = dates.map(key => ({ key, before: before.absences?.find(day => day.date === key) ?? null, after: after.absences?.find(day => day.date === key) ?? null }));
+  const entry: UndoEntry = { version: 4, token: randomUUID(), label: 'Abwesenheiten geändert', revision: after.revision, blocks: [],
+    weeks: changed(before.weeks, after.weeks, week => week.weekStart), vacations, absences };
+  db.prepare('INSERT INTO meta(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run(KEY, JSON.stringify(entry));
+}
+
 function same<T>(a: T | null, b: T | null): boolean { return JSON.stringify(a) === JSON.stringify(b); }
 
 /** Verifies the exact affected after-state and overlap before changing any row. */
@@ -159,15 +190,19 @@ export function applyBlockUndo(db: DatabaseSync, current: AppState, entry: UndoE
     if (entry.templates.some(c => !same(templates.get(c.key) ?? null, c.after)) ||
       !same(current.recentEntries, entry.recentEntries.after)) return false;
   }
-  if (entry.version === 3) {
+  if (entry.version === 3 || entry.version === 4) {
     const vacations = new Map(current.vacations.map(day => [day.date, day]));
     if (entry.vacations.some(change => !same(vacations.get(change.key) ?? null, change.after))) return false;
+  }
+  if (entry.version === 4) {
+    const absences = new Map((current.absences ?? []).map(day => [day.date, day]));
+    if (entry.absences.some(change => !same(absences.get(change.key) ?? null, change.after))) return false;
   }
   const changedIds = new Set(entry.blocks.map(c => c.key));
   const remaining = current.blocks.filter(block => !changedIds.has(block.id));
   const restored = entry.blocks.flatMap(c => c.before ? [c.before] : []);
   const combined = [...remaining, ...restored].sort((a, b) => a.start.localeCompare(b.start));
-  if (entry.version !== 3) {
+  if (entry.version !== 3 && entry.version !== 4) {
     for (let i = 1; i < combined.length; i++) {
       if (Temporal.Instant.compare(combined[i - 1].end, combined[i].start) > 0) return false;
     }
@@ -188,11 +223,17 @@ export function applyBlockUndo(db: DatabaseSync, current: AppState, entry: UndoE
     db.prepare("INSERT INTO meta(key,value) VALUES ('recent_entries',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
       .run(JSON.stringify(entry.recentEntries.before));
   }
-  if (entry.version === 3) {
+  if (entry.version === 3 || entry.version === 4) {
     const deleteVacation = db.prepare('DELETE FROM vacations WHERE date=?');
     const insertVacation = db.prepare('INSERT INTO vacations(date,fraction) VALUES (?,?)');
     entry.vacations.forEach(change => deleteVacation.run(change.key));
     entry.vacations.forEach(change => { if (change.before) insertVacation.run(change.before.date, change.before.fraction); });
+  }
+  if (entry.version === 4) {
+    for (const change of entry.absences) {
+      if (change.before) writeAbsence(db, change.before);
+      else db.prepare('DELETE FROM absences WHERE date=?').run(change.key);
+    }
   }
   return true;
 }

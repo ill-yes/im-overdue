@@ -174,11 +174,12 @@ test('a delayed old review cannot replace the loaded review or acknowledgment af
   await review(page).getByRole('button', { name: 'Abbrechen', exact: true }).click();
   await expect(review(page)).toHaveCount(0);
   await page.getByRole('button', { name: 'Weitere Kalenderaktionen', exact: true }).click();
-  await page.getByRole('menuitem', { name: 'Urlaub eintragen', exact: true }).click();
-  const vacation = page.getByRole('dialog', { name: 'Urlaub', exact: true });
+  await page.getByRole('menuitem', { name: 'Abwesenheiten', exact: true }).click();
+  const vacation = page.getByRole('dialog', { name: 'Abwesenheiten', exact: true });
   await vacation.getByLabel('Von', { exact: true }).fill('2026-09-28');
   await vacation.getByLabel('Bis einschließlich', { exact: true }).fill('2026-09-28');
-  await vacation.getByRole('button', { name: 'Urlaub eintragen', exact: true }).click();
+  await vacation.getByRole('combobox', { name: 'Urlaub Montag, 28. September 2026', exact: true }).selectOption('1');
+  await vacation.getByRole('button', { name: 'Abwesenheiten speichern', exact: true }).click();
   await expect(vacation).toHaveCount(0);
   const changed = await getState(page);
   expect(changed.revision).toBeGreaterThan(before.revision);

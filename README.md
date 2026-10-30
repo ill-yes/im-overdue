@@ -37,17 +37,20 @@ service credentials or automatic tracking.
 ![The week calendar with imported evidence beside recorded working time](docs/images/week-en.png)
 
 *The real app with synthetic example data. Imported activities help you remember;
-only the working time you record counts.*
+you record working time yourself.*
 
 ## Features
 
 - **📅 See your week clearly.** Week and month calendars, precise time entry and
   reusable templates.
-- **⚖️ Keep your balance.** Work targets, confirmed and provisional balances, leave
-  and notes.
+- **⚖️ Keep your balance.** An opening balance, editable payouts and corrections,
+  with confirmed, open and future amounts kept separate.
+- **🌿 Plan absences.** Combine vacation, time off in lieu and sickness; dated German
+  state holiday rules and individual exceptions respect your working-time target.
 - **🔌 Bring your evidence.** Named data sources with JSON/CSV assignment, previews
   and import history.
-- **📄 Take your records with you.** Printable timesheets and SQLite backups.
+- **📄 Take your records with you.** Printable timesheets with an optional account
+  section, separate account CSV and SQLite backups.
 - **Choose your language.** English by default, with **English / Deutsch** on the
   login page and in settings.
 - **Host it yourself.** One Docker container for the UI, API and SQLite; AMD64
@@ -92,9 +95,13 @@ by `npm start`. See [development](docs/development.md) for configuration and tes
 
 ## First steps
 
-1. Check your time zone, weekly target and working days in settings.
-2. Record your first work block in the calendar. You can start without importing anything.
-3. Review and close completed weeks, then export a timesheet when needed.
+1. Check your time zone, weekly target and working days in settings. If applicable,
+   add your German state under **Public holidays** and review local exceptions.
+2. Set an opening date and balance under **Time account → Hours account** if you
+   want a running account. Zero is a valid starting balance.
+3. Record your first work block and any **Absences** in the calendar. You can
+   start without importing anything.
+4. Review and close completed weeks, then export a timesheet when needed.
 
 **Optional: bring your evidence.** Create named data sources, analyze an activity
 file, assign its source types and review the preview before saving. Activities
@@ -109,6 +116,8 @@ Start with what you want to do:
 
 - **🚀 Install and self-host:** [Docker and Unraid](docs/docker.md).
 - **📅 Record and review your time:** [Using I'm Overdue](docs/usage.md).
+- **⚖️ Manage your account and absences:** [Hours account](docs/usage.md#hours-account),
+  [absences](docs/usage.md#absences) and [public holidays](docs/usage.md#public-holidays).
 - **🔌 Prepare activity imports:** [JSON/CSV format and exporter guide](docs/import-format.md).
 - **🛠️ Develop and contribute:** [Development](docs/development.md).
 

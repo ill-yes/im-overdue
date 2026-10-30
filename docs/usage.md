@@ -16,7 +16,10 @@ you can record work without it.
 - [Named data sources and import history](#named-data-sources-and-import-history)
 - [Import activity](#import-activity)
 - [Templates and recent entries](#templates-and-recent-entries)
+- [Absences](#absences)
 - [Annual leave and entitlement](#annual-leave-and-entitlement)
+- [Public holidays](#public-holidays)
+- [Hours account](#hours-account)
 - [Notes and undo](#notes-and-undo)
 - [Close weeks and read balances](#close-weeks-and-read-balances)
 - [Export a timesheet](#export-a-timesheet)
@@ -36,7 +39,9 @@ zone, user-written text, imported content and saved calculations do not change.
 
 In settings, check the IANA time zone, weekly hours and working days. A normal
 target change starts next Monday. Correcting a past target is a separate action
-that asks for confirmation before reopening affected closed weeks.
+that asks for confirmation before reopening affected closed weeks. Configure
+[public holidays](#public-holidays) for your German state and, if you want a
+running balance, set up the [hours account](#hours-account).
 
 ## Record a working day
 
@@ -56,7 +61,7 @@ change the end date.
 An exact gap between two blocks is clickable and opens quick entry without
 saving. Tab/Enter and touch work too. The small-gaps menu makes narrow gaps
 accessible. A click before the first or after the last block opens detailed time
-entry. Evidence and leave never generate work blocks or fillable work gaps.
+entry. Evidence and absences never generate work blocks or fillable work gaps.
 
 During a save, that dialog's inputs are disabled. Closing it does not cancel a
 request already sent. A newly opened draft remains editable and can be saved once
@@ -68,8 +73,10 @@ replace a newer draft. Changing language does not resend changes.
 The main views are calendar, time account and templates. Their existing routes
 `#/kalender`, `#/zeitkonto` and `#/vorlagen` also support browser back/forward.
 Switching views keeps the calendar date, filters and scroll position, selected
-report period and template search. Unsaved template or leave-entitlement edits
-need confirmation before being discarded; their own saves temporarily block navigation.
+report period and template search. **Time account** has three tabs: **Hours account**
+for the running balance, **Period reports** for month/quarter/year summaries, and
+**Leave account** for annual entitlement. Unsaved template, account or entitlement
+edits need confirmation before being discarded; their own saves temporarily block navigation.
 
 Switch between week and month to inspect daily work, target, balance, week
 status and the number of filtered activities. Clicking a month day opens its
@@ -171,33 +178,128 @@ Editing or deleting work does not change that list. Old blocks without a creatio
 time appear separately by work date; imports do not appear. Templates and recent
 entries are included in SQLite backups.
 
+## Absences
+
+Open **Absences** in the calendar for one day or a range of up to 366 calendar
+days. Combine **Vacation** (none, half or whole day), time off in lieu under
+**Compensation** (half day, whole day or a number of whole minutes) and
+**Sickness fills remainder**. The controls above the day list update selected
+days immediately in the preview. Review and adjust individual days, then save
+once. Extending the range uses the current combination; excluded days remain
+unchanged. Opening existing records does not replace their individual values.
+
+To reuse the displayed pattern without changing a selection, choose **Apply
+pattern to selected days** when offered. Days you have not edited pick up newer
+values from other tabs; saving does not replace those untouched days.
+
+Days with no target are skipped for new absences; existing records can be cleared.
+**Clear selected days** removes all three absence settings from those days.
+
+Absences never create work blocks. On a day without a public holiday, calculation
+uses this order:
+
+| Part | Effect |
+| --- | --- |
+| Recorded work | Counts as actual work. |
+| Vacation | Credits the full or half daily target. Work still counts in addition. |
+| Time off in lieu | Uses only the target remaining after work and vacation, up to the requested amount. It gives no extra credit. |
+| Sickness | If selected, credits the remainder after work, vacation and time off in lieu. |
+
+**Daily balance = work + vacation credit + holiday credit + sickness credit − target.**
+
+For an 8-hour target, 2 hours of work, half a day of vacation and 1 hour of time
+off in lieu leave 1 hour for sickness. With sickness selected the balance is
+−1 hour: the time off in lieu uses 1 hour of the account. It is not deducted a
+second time. Any remainder without sickness stays uncovered and reduces the
+balance too. The preview shows requested and effective time off in lieu, credits,
+uncovered target and the daily balance. A warning about insufficient confirmed
+balance does not prevent saving; negative balances are allowed.
+
+A public holiday takes precedence: it credits the daily target, while vacation,
+time off in lieu and sickness have no effect and use no vacation entitlement.
+Recorded work still adds to the balance. Saved absence settings remain in place
+and become effective again if the holiday is removed.
+
+Changed absences reopen affected closed weeks after confirmation. Undo restores
+the entire previous combination and week status as one action. Future weeks
+containing only absences do not create a provisional deficit before they begin.
+Absence dates stay fixed when you change the app time zone.
+
 ## Annual leave and entitlement
 
-Choose one day or a range of up to 366 calendar days, with full or half days.
-Review individual days before saving: days with no target are skipped, and you
-must deselect public holidays yourself. Existing leave can be removed for a range.
+Record full or half vacation days through [Absences](#absences). A full day
+credits that day's target, a half day credits half, including seconds if needed.
+Changing a target profile changes this credit. A day with no target or an
+effective public holiday uses no entitlement and gives no vacation credit;
+stored vacation remains visible and removable. Sickness does not automatically
+cancel a vacation selection: review the combination deliberately.
 
-Leave is credit, not a work block:
+In **Time account → Leave account**, set each year's annual-leave entitlement
+and carryover in whole or half days. Effective vacation through today is taken;
+later vacation is planned. Both reduce the remainder. Without an entitlement,
+the remainder is unknown. Negative remainders are allowed. There is no automatic
+carryover, expiry or prorating. Saving a changed entitlement clears undo;
+unchanged values do not. Unsaved edits need confirmation when changing year/view
+or closing.
 
-**Daily balance = work + leave credit − target.**
+## Public holidays
 
-A full leave day credits that day's target; a half day credits half, including
-seconds if needed. Work on leave adds to that credit and is shown before
-saving. Leave remains on its local date after time-zone changes. A changed
-target profile also changes the credit. With a zero target, leave uses no
-entitlement and gives no credit, but stays visible and removable.
+Open **Settings → Public holidays**. Select a German state and an **Effective
+from** date, then save the rule. The latest rule on or before a date applies,
+including its first day. Add another dated rule when your applicable state
+changes, or choose **Automatic holidays off** from a date. Editing the same
+effective date replaces that rule; deleting it lets the preceding rule apply.
+No automatic holiday rule is configured initially.
 
-Changes reopen affected closed weeks after confirmation and can be undone as
-one action, restoring previous fractions and week status. Future weeks containing
-only leave do not acquire a provisional deficit before they begin.
+Under **Individual dates**, add or rename a holiday, exclude a holiday, or
+**Reset to regional rule** to remove your exception. Exceptions also work without
+an automatic rule. Automatic rules cover state-wide German public holidays from
+1990; local holidays must be added manually. See the [holiday rules and scope](holiday-rules.md)
+for the included dates and historical limits. Manual names stay as entered in
+both languages.
 
-In **Time account → Leave account**, set each year's annual-leave entitlement and carryover
-in whole or half days. Leave through today is taken; later leave is planned.
-Both reduce the remaining amount. Without an entitlement, the remainder is
-unknown. Negative remainders are allowed. There is no automatic carryover,
-expiry, prorating, holiday or sickness treatment. Saving a changed entitlement
-clears undo; unchanged values do not. Unsaved edits need confirmation when
-changing year/view or closing.
+A holiday credits only the applicable daily target, so a day with no target
+gets no holiday credit. It does not create work or activate an otherwise untouched
+week. Changes that alter the calculation reopen affected closed weeks after
+confirmation. Holiday dates and effective dates stay fixed after a time-zone change.
+
+## Hours account
+
+Open **Time account → Hours account** and save an **Opening balance** with a
+date and signed duration in `h:mm`, for example `12:30`, `−2:15` or `0:00`.
+Only days and entries on or after that date count. Earlier work and entries stay
+saved; excluded entries remain visible. Editing the opening date or amount
+recalculates the account after confirmation. Without an opening balance, or
+before a future opening date, the confirmed balance is unavailable.
+
+After setup, the opening balance becomes a compact summary. Use **Edit opening
+balance** to change it. **Add absence** and **Timesheet** are available directly
+from the hours account.
+
+The account separates:
+
+- **Confirmed balance:** opening balance plus daily balances from closed weeks
+  through today, plus payouts and corrections dated through today.
+- **Open days:** provisional daily change through today, excluded from the
+  confirmed balance until those weeks are closed.
+- **Future compensation** and **Future entries:** planned time off in lieu and
+  dated entries after today, shown separately without changing today's balance.
+
+Only recorded or explicitly handled weeks contribute daily balances; the app
+does not invent missing weeks between the opening date and today. Even if you
+close the current week early, its future days enter the hours account only when
+their dates arrive. Period reports can still show that closed week's full target.
+
+Use **Add entry** for a **Payout** or **Correction**. Choose a date on or after
+the opening date and enter a non-zero duration and a reason (up to 500 characters).
+Enter payouts as positive durations; the app deducts them. Corrections can be
+positive or negative. Entries can be edited or deleted, and future entries become
+effective on their dates. They do not create work blocks or change week status.
+Account changes clear undo; use the entry's edit/delete actions for corrections.
+
+Time off in lieu affects the daily balance once through the missing work credit;
+there is no additional account deduction. A negative confirmed balance is allowed
+and does not block time off in lieu or payouts.
 
 ## Notes and undo
 
@@ -207,20 +309,22 @@ characters each. Clear and save to remove a note. They keep their local date
 status. Notes can be added to closed and untouched weeks. Unsaved drafts need
 confirmation; saves and stale-revision checks preserve input on error.
 
-Undo restores exactly the latest successful work or leave change, including
+Undo restores exactly the latest successful work or absence change, including
 all daily segments, IDs, title, notes, week status and, if created together, a
 new template and recent-entry changes. It survives reload and app restart.
-A new work/leave change replaces it. Other successful changes—imports,
-closing weeks, settings, notes or separate template/entitlement changes—clear it.
+A new work/absence change replaces it. Other successful changes—imports,
+closing weeks, settings, holiday rules, account entries, notes or separate
+template/entitlement changes—clear it.
 Unchanged saves, failed requests, previews, navigation and downloads do not.
 Revision checks prevent stale undo from overwriting another tab's work. There is
 one undo step and no redo. **Ctrl/Cmd+Z** works outside dialogs, gestures and text inputs.
 
 ## Close weeks and read balances
 
-Before closing a week, review past target days without work or full leave
-credit, evidence outside work and days exceeding 12 actual working hours. The
-review uses all sources, regardless of calendar filters. It provides guidance,
+Before closing a week, review warnings about uncovered past target days, evidence
+outside work and days exceeding 12 actual working hours. Vacation, public holidays,
+sickness and effective time off in lieu are included when checking target coverage.
+The review uses all sources, regardless of calendar filters. It provides guidance,
 not automatic tracking or a legal assessment. Acknowledge warnings and, when
 closing the current week early, its full target. The server rechecks the data and
 warnings: a changed revision or new time-dependent warning requires fresh confirmation.
@@ -228,7 +332,7 @@ warnings: a changed revision or new time-dependent warning requires fresh confir
 Closed weeks contribute confirmed balances. Started, open weeks remain
 provisional; all their days are provisional until closure. Untouched weeks mean
 missing data, not a zero balance. Deliberately closing an empty standard week
-produces −40 hours. Months, quarters and years split boundary weeks by local day
+without holidays or absences produces −40 hours. Months, quarters and years split boundary weeks by local day
 and show confirmed and provisional results separately, with open weeks linked
 back to the calendar.
 
@@ -242,8 +346,9 @@ work `9/8/10/8/7/2/0` hours and a 40-hour target gives +4 hours for the week,
 Times are stored as UTC instants; local days follow the configured time zone.
 Actual elapsed time counts. Clock-change days can have 23 or 25 hours; repeated
 local times must be explicitly resolved. Changing closed work reopens all affected
-weeks atomically. Holidays, sickness and statutory breaks are not calculated
-automatically. Closing a week is your personal confirmation, not employer approval.
+weeks atomically. Configured holidays and explicitly entered absences affect the
+balance as described above. Statutory breaks are not deducted automatically;
+record breaks as gaps. Closing a week is your personal confirmation, not employer approval.
 
 ## Export a timesheet
 
@@ -251,14 +356,20 @@ Open the timesheet from the selected time-account period, a week, or a custom
 range of up to 366 days. Titles are included by default; work, day and week notes
 are opt-in. An optional name applies only to this export. Only closed weeks are
 included by default. The preview counts included and excluded days; with no days,
-CSV and printing are disabled until you change the range or filter.
+the daily CSV is disabled until you change the range or filter. The optional
+account section can still be printed and its separate CSV downloaded.
 
 Preview, CSV and print share one frozen data snapshot, including revision and
 time zone. Change the period or reopen the dialog to load new data. Language
 follows the app selection without changing the underlying snapshot. Each day
-lists work intervals with titles, work, leave, target and balance. Without the
-closure filter, open days are provisional and untouched days unrecorded; the
+lists work intervals with titles, work, credits, target and balance, plus public
+holidays, sickness, time off in lieu and uncovered target where applicable. Without
+the closure filter, open days are provisional and untouched days unrecorded; the
 latter have no confirmed balance. Confirmed/provisional totals stay separate.
+The **Credits** column combines effective vacation, sickness and public-holiday
+credits, with a breakdown below each total. Period reports show the same
+breakdown. Time off in lieu is not a credit and is not deducted a second time.
+The CSV keeps its separate absence columns and existing column order.
 
 Print opens the browser's A4 portrait dialog with 12 mm margins; use its PDF
 option to save a file. A typical month with two short intervals per working day
@@ -267,19 +378,30 @@ with repeated table headings. Durations use h:mm, adding seconds when needed;
 clock-change times include unambiguous UTC offsets. The report is for information,
 not an approval workflow.
 
+Enable **Include time account** to add the hours account to the preview and
+PDF/print; it is off by default. The section reconciles the period's opening
+balance, confirmed daily movements, payouts/corrections and closing balance.
+Open-day changes and future plans remain separate. Its as-of date is the earlier
+of today in the snapshot's time zone and the period's final day. The account is
+independent of the daily closed-week filter. **Account CSV** downloads these
+account rows separately, even when no daily rows pass the filter; the checkbox
+only controls the preview and print section.
+
 CSV uses UTF-8 with BOM and semicolons. Duration values are numeric minutes,
 including half minutes where needed. ISO dates, numeric format and column order
-remain stable across languages; human-readable labels follow the app. User input
-is protected against spreadsheet-formula interpretation. Check notes and the
+remain stable across languages; human-readable labels follow the app. The daily
+CSV appends holiday, sickness, effective time off in lieu and uncovered-target
+minutes after the existing columns. User input is protected against spreadsheet-formula interpretation. Check notes and the
 preview before sharing: exports may contain private information and are generated
 locally, without sending data to another service.
 
 ## Keep your data safe
 
 Download a consistent SQLite snapshot in settings. It includes work, evidence,
-targets, time zone, week status, notes, leave, entitlements, templates, recent
-entries and any pending undo, which can include earlier notes. It does not contain
-the login password or sessions. Copying only the running main database file is
+targets, time zone, week status, notes, vacation, sickness, time off in lieu,
+holiday rules and exceptions, the account opening and dated entries, entitlements,
+templates, recent entries and any pending undo, which can include earlier notes.
+It does not contain the login password or sessions. Copying only the running main database file is
 not a consistent backup because SQLite uses WAL. There is no file encryption or
 cloud backup.
 
@@ -301,6 +423,7 @@ updates and retain the original until the restored app has been checked.
 
 ## Next steps
 
+- [Review holiday rules and scope](holiday-rules.md)
 - [Prepare an optional activity import](import-format.md)
 - [Run with Docker or Unraid](docker.md)
 - [Browse all documentation](README.md)

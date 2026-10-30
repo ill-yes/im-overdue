@@ -113,7 +113,21 @@ export function Calendar({
   const [showSmallGaps, setShowSmallGaps] = useState(false);
   const [localError, setLocalError] = useState<TextValue>('');
   const weekDays = useMemo(() => calendarWeekDays(dates, state, enabledSources),
-    [dates, zone, state.activities, state.blocks, state.profiles, state.vacations, enabledKey]);
+    [dates, zone, state.activities, state.blocks, state.profiles, state.vacations, state.absences, state.holidayProfiles, state.holidayOverrides, enabledKey]);
+  // Measure the metadata itself, then reserve the same row in every sticky heading.
+  // This keeps the timeline aligned even when holiday names wrap at narrow widths.
+  useLayoutEffect(() => {
+    if (!active) return;
+    const week = scrollRef.current?.querySelector<HTMLElement>('.ov-calendar-week');
+    if (!week) return;
+    const rows = [...week.querySelectorAll<HTMLElement>('.day-absence-items')];
+    const measure = () => week.style.setProperty('--ov-absence-height',
+      `${Math.ceil(Math.max(0, ...rows.map(row => row.getBoundingClientRect().height)))}px`);
+    measure();
+    const observer = new ResizeObserver(measure);
+    rows.forEach(row => observer.observe(row));
+    return () => observer.disconnect();
+  }, [active, weekDays]);
   const smallGaps = weekDays.flatMap(({ date, gaps }) => gaps
     .filter((gap) => gap.height < 12)
     .map((gap) => ({ date, gap })));
@@ -384,6 +398,7 @@ export function Calendar({
               >
                 <CalendarDayHeading
                   day={{ date, bounds, total, vacation }}
+                  state={state}
                   selected={focusDate === date}
                   note={note}
                   busy={busy}

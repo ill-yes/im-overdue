@@ -39,17 +39,20 @@ automatische Zeiterfassung.
 ![Der Wochenkalender mit importierten Belegen neben der erfassten Arbeitszeit](docs/images/week-de.png)
 
 *Die echte App mit synthetischen Beispieldaten. Importierte Aktivitäten helfen
-beim Erinnern; nur selbst erfasste Arbeitszeit zählt.*
+beim Erinnern; Arbeitszeit erfasst du selbst.*
 
 ## Funktionen
 
 - **📅 Die Woche im Blick.** Wochen- und Monatskalender, genaue Zeiteingabe und
   wiederverwendbare Vorlagen.
-- **⚖️ Dein Saldo bleibt klar.** Arbeitszeitsoll, bestätigte und vorläufige Salden,
-  Urlaub und Notizen.
+- **⚖️ Dein Saldo bleibt klar.** Anfangsbestand, bearbeitbare Auszahlungen und
+  Korrekturen; bestätigte, offene und zukünftige Werte bleiben getrennt.
+- **🌿 Abwesenheiten planen.** Urlaub, Freizeitausgleich und Krankheit kombinieren;
+  datierte Bundeslandregeln und einzelne Feiertagsausnahmen beachten dein Soll.
 - **🔌 Belege an einem Ort.** Benannte Datenquellen mit JSON-/CSV-Zuordnung,
   Vorschau und Importhistorie.
-- **📄 Unterlagen zum Mitnehmen.** Druckbare Stundenzettel und SQLite-Backups.
+- **📄 Unterlagen zum Mitnehmen.** Druckbare Stundenzettel mit optionalem Kontoteil,
+  separate Zeitkonto-CSV und SQLite-Backups.
 - **Deine Sprache.** Englisch als Standard; **English / Deutsch** auf der
   Login-Seite und in den Einstellungen.
 - **Bei dir zu Hause.** Ein Docker-Container für Oberfläche, API und SQLite;
@@ -96,9 +99,13 @@ dann `npm start` ausführen. Konfiguration und Tests stehen unter
 
 ## Erste Schritte
 
-1. Prüfe Zeitzone, Wochenstunden und Arbeitstage in den Einstellungen.
-2. Erfasse deinen ersten Arbeitsblock im Kalender. Du kannst ohne Import beginnen.
-3. Prüfe und schließe fertige Wochen ab. Exportiere bei Bedarf einen Stundenzettel.
+1. Prüfe Zeitzone, Wochenstunden und Arbeitstage in den Einstellungen. Ergänze
+   bei Bedarf unter **Feiertage** dein Bundesland und prüfe lokale Ausnahmen.
+2. Lege unter **Zeitkonto → Stundenkonto** Anfangsdatum und Bestand fest, wenn du
+   ein laufendes Konto möchtest. Null ist ein gültiger Anfangsbestand.
+3. Erfasse deinen ersten Arbeitsblock und **Abwesenheiten** im Kalender. Du kannst
+   ohne Import beginnen.
+4. Prüfe und schließe fertige Wochen ab. Exportiere bei Bedarf einen Stundenzettel.
 
 **Optional: Belege mitbringen.** Lege benannte Datenquellen an, analysiere eine
 Aktivitätsdatei, ordne ihre Quellentypen zu und prüfe die Vorschau vor dem Speichern.
@@ -113,6 +120,8 @@ Starte mit dem, was du erledigen möchtest:
 
 - **🚀 Installieren und selbst hosten:** [Docker und Unraid](docs/de/docker.md).
 - **📅 Arbeitszeit erfassen und prüfen:** [I'm Overdue verwenden](docs/de/usage.md).
+- **⚖️ Konto und Abwesenheiten verwalten:** [Stundenkonto](docs/de/usage.md#stundenkonto),
+  [Abwesenheiten](docs/de/usage.md#abwesenheiten) und [Feiertage](docs/de/usage.md#feiertage).
 - **🔌 Aktivitätsimporte vorbereiten:** [JSON-/CSV-Format und Exporter-Anleitung](docs/de/import-format.md).
 - **🛠️ Entwickeln und beitragen:** [Entwicklung](docs/de/development.md).
 

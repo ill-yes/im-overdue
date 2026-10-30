@@ -390,6 +390,7 @@ test('account page keeps native summary navigation and note modal restores focus
   await newBlock(page, MONDAY, '09:00', '10:00');
   const reportsButton = page.getByRole('navigation', { name: 'Hauptnavigation' }).getByRole('link', { name: 'Zeitkonto', exact: true });
   await reportsButton.click();
+  await page.getByRole('tab', { name: 'Auswertungen', exact: true }).click();
   const dialog = page.getByRole('region', { name: 'Zeitkonto', exact: true });
   const summary = dialog.locator('.reports-open-weeks summary');
   await summary.focus();

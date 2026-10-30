@@ -10,6 +10,8 @@ import { activityKey, activitySourceName } from '../../shared/data-sources.js';
 import { duration, longDate } from '../format.js';
 import { safeExternalUrl } from '../links.js';
 import './day-review.css';
+import { DayAbsenceSummary } from './DayAbsenceSummary.js';
+import { absenceSummaryMessages } from '../locales/absence-summary.js';
 
 
 export interface DayReviewProps {
@@ -38,6 +40,7 @@ export function DayReview({
   onClose,
 }: DayReviewProps) {
   const { t } = useMessages(calendarMessages);
+  const { t: a } = useMessages(absenceSummaryMessages);
   const [query, setQuery] = useState('');
   const [pageState, setPageState] = useState({ key: '', count: 50 });
   const sourceKey = JSON.stringify(enabledSources);
@@ -95,13 +98,11 @@ export function DayReview({
           <ChevronRight size={18} />
         </button>
       </div>
-      <div className={`dr-summary${vacation ? ' has-vacation' : ''}`}>
+      <div className="dr-summary">
         <div>
           <span>{vacation ? t('work') : t('actual')}</span>
           <strong>{duration(review.totals.actualMinutes)}</strong>
         </div>
-        {vacation && <div className="dr-vacation-total"><span>{vacation.fraction === 0.5 ? t('halfVacation') : t('vacation')}</span>
-          <strong>+{duration(review.totals.vacationMinutes)}</strong></div>}
         <div>
           <span>{t('target')}</span>
           <strong>{duration(review.totals.targetMinutes)}</strong>
@@ -111,12 +112,13 @@ export function DayReview({
           <strong data-day-review-status={review.status}>{t(`status.${review.status}`)}</strong>
         </div>
       </div>
+      <DayAbsenceSummary state={state} date={date} className="dr-absences" />
       <button className="dr-new" type="button" disabled={busy} onClick={onNew}>
         <Plus size={15} /> {t('enterTime')}
       </button>
       <section className="dr-note" aria-label={t('noteForDay')}>
         {onVacation && <button className="button secondary dr-vacation-action" type="button" disabled={busy}
-          onClick={() => onVacation(date)}><Sun size={15} /> {vacation ? t('editVacation') : t('addVacation')}</button>}
+          onClick={() => onVacation(date)}><Sun size={15} /> {a('absences')}</button>}
         <button className="button secondary" type="button" onClick={onNote}>
           <StickyNote size={15} /> {t('dayNote')}
         </button>

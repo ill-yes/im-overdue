@@ -11,7 +11,7 @@ import { TemplatesPage } from './components/TemplatesPage';
 import { ReuseDialog } from './components/ReuseDialog';
 import { SettingsDialog } from './components/SettingsDialog';
 import { TimesheetDialog, type TimesheetPreset } from './components/TimesheetDialog';
-import { VacationDialog } from './components/VacationDialog';
+import { AbsenceDialog } from './components/AbsenceDialog';
 import { WeekCloseDialog } from './components/WeekCloseDialog';
 import { useAppRequests } from './hooks/useAppRequests';
 import { useCalendarFocus } from './hooks/useCalendarFocus';
@@ -21,6 +21,7 @@ import type { QuickCreateAnchor, QuickCreateDraft } from './quick-create';
 import { weekLabel } from './format';
 import { useMessages } from './i18n';
 import { shellMessages, undoIsVacation } from './locales/shell';
+import { accountingMessages } from './locales/accounting';
 import { noteText } from '../shared/notes.js';
 import { activityDataSourceId } from '../shared/data-sources.js';
 import { Temporal, addDays, localDate, today, weekStartFor } from '../shared/time.js';
@@ -32,7 +33,7 @@ import {
   type Source,
   type WorkBlock,
   type VacationAllowance,
-  type VacationChange,
+  type AbsenceChange,
 } from '../shared/types.js';
 
 type Dialog = { kind: 'import' | 'settings' | 'timesheet'; id: number; preset?: TimesheetPreset } | null;
@@ -48,6 +49,7 @@ function sameBlockValues(a: WorkBlock, b: Pick<WorkBlock, 'start' | 'end' | 'tit
 
 export default function App() {
   const { t, m, text: displayText } = useMessages(shellMessages);
+  const { m: accountingMessage } = useMessages(accountingMessages);
   const [anchorDate, setAnchorDate] = useState(() => today('Europe/Berlin'));
   const [view, setView] = useState<'week' | 'month'>('week');
   const [weekFocusDate, setWeekFocusDate] = useState<string>();
@@ -199,8 +201,8 @@ export default function App() {
         const templatesRemoved = state.templates.filter((template) => !result.templates.some((item) => item.id === template.id)).length;
         return {
           catalog: { value: {
-            en: `${shellMessages[undoIsVacation(state.undo?.label ?? '') ? 'undoVacation' : 'undoTime'].en}${templatesRemoved ? shellMessages.undoTemplate.en : ''}${restored.length ? shellMessages.undoWeeks.en.replace('{weeks}', restored.map(w => weekLabel(w.weekStart, 'en')).join('; ')) : ''}`,
-            de: `${shellMessages[undoIsVacation(state.undo?.label ?? '') ? 'undoVacation' : 'undoTime'].de}${templatesRemoved ? shellMessages.undoTemplate.de : ''}${restored.length ? shellMessages.undoWeeks.de.replace('{weeks}', restored.map(w => weekLabel(w.weekStart, 'de')).join('; ')) : ''}`,
+            en: `${shellMessages[state.undo?.label === 'Abwesenheiten geändert' ? 'undoAbsences' : undoIsVacation(state.undo?.label ?? '') ? 'undoVacation' : 'undoTime'].en}${templatesRemoved ? shellMessages.undoTemplate.en : ''}${restored.length ? shellMessages.undoWeeks.en.replace('{weeks}', restored.map(w => weekLabel(w.weekStart, 'en')).join('; ')) : ''}`,
+            de: `${shellMessages[state.undo?.label === 'Abwesenheiten geändert' ? 'undoAbsences' : undoIsVacation(state.undo?.label ?? '') ? 'undoVacation' : 'undoTime'].de}${templatesRemoved ? shellMessages.undoTemplate.de : ''}${restored.length ? shellMessages.undoWeeks.de.replace('{weeks}', restored.map(w => weekLabel(w.weekStart, 'de')).join('; ')) : ''}`,
           } }, key: 'value',
         };
       },
@@ -337,10 +339,10 @@ export default function App() {
     if (ok) setWeekCloseEditor((current) => current === editor ? null : current);
     return ok;
   };
-  const saveVacationEditor = async (editor: NonNullable<VacationEditor>, days: VacationChange[]) => {
+  const saveVacationEditor = async (editor: NonNullable<VacationEditor>, days: AbsenceChange[], expectedRevision: number) => {
     const ok = await applyMutation(
-      (revision, confirmed) => api.saveVacations(days, revision, confirmed),
-      m('vacationSaved'),
+      (_revision, confirmed) => api.saveAbsences(days, expectedRevision, confirmed),
+      accountingMessage('saved'),
       editor.id,
     );
     if (ok) setVacationEditor((current) => current === editor ? null : current);
@@ -470,7 +472,10 @@ return (
               toggleSource, openNote, openTimesheet, setWeekStatus, closeReview, showActivity, openDay,
             }}
           />
-          {(page === 'reports' || accountVisited) && <div hidden={page !== 'reports'} className="workspace-page-panel"><ReportsPage key={`${accountSeed.id}:${accountAnchor}`} state={state} anchor={accountAnchor} busy={busy} requestError={failure?.sessionId === pageSessions.reports ? error : ''} onSaveAllowance={input => saveVacationAllowance(pageSessions.reports, input)} onOpenVacation={openVacation} onTimesheet={openTimesheet} onNavigateWeek={openDay} onLeaveGuardChange={registerReportsGuard} /></div>}
+          {(page === 'reports' || accountVisited) && <div hidden={page !== 'reports'} className="workspace-page-panel"><ReportsPage key={`${accountSeed.id}:${accountAnchor}`} initialTab={accountSeed.id ? 'balance' : 'account'} state={state} anchor={accountAnchor} busy={busy} requestError={failure?.sessionId === pageSessions.reports ? error : ''} onSaveAllowance={input => saveVacationAllowance(pageSessions.reports, input)} onOpenVacation={openVacation} onTimesheet={openTimesheet} onNavigateWeek={openDay} onLeaveGuardChange={registerReportsGuard}
+            onOpening={(input, revision) => applyMutation(() => api.saveAccountOpening(input, revision), accountingMessage('saved'), pageSessions.reports)}
+            onEntry={(id, input, revision) => applyMutation(() => api.saveAccountEntry(id, input, revision), accountingMessage('saved'), pageSessions.reports)}
+            onDeleteEntry={(id, revision) => applyMutation(() => api.deleteAccountEntry(id, revision), accountingMessage('saved'), pageSessions.reports)} /></div>}
           <div hidden={page !== 'templates'} className="workspace-page-panel"><TemplatesPage active={page === 'templates'} state={state} date={entryDate} busy={busy} requestError={failure?.sessionId === pageSessions.templates ? error : ''} onSelect={input => setBlockEditor({ id: ++nextSessionId.current, date: entryDate, initialReuse: input })} onSaveTemplate={(input,id) => saveTemplate(pageSessions.templates,input,id)} onDeleteTemplate={id => deleteTemplate(pageSessions.templates,id)} onBack={() => goToPage('calendar')} onLeaveGuardChange={registerTemplatesGuard} /></div>
         </>}
       </main>
@@ -538,19 +543,25 @@ return (
               dialog.id,
             )
           }
+          holidayActions={{
+            onProfile: (input, revision) => applyMutation((_rev, confirm) => api.saveHolidayProfile(input, revision, confirm), accountingMessage('saved'), dialog.id),
+            onDeleteProfile: (id, revision) => applyMutation((_rev, confirm) => api.deleteHolidayProfile(id, revision, confirm), accountingMessage('saved'), dialog.id),
+            onOverride: (input, revision) => applyMutation((_rev, confirm) => api.saveHolidayOverride(input, revision, confirm), accountingMessage('saved'), dialog.id),
+            onDeleteOverride: (date, revision) => applyMutation((_rev, confirm) => api.deleteHolidayOverride(date, revision, confirm), accountingMessage('saved'), dialog.id),
+          }}
         />
       )}
       {dialog?.kind === 'timesheet' && (
         <TimesheetDialog key={dialog.id} anchor={anchorDate} preset={dialog.preset} onLoad={api.timesheet} onClose={() => setDialog((current) => current === dialog ? null : current)} />
       )}
       {state && vacationEditor && (
-        <VacationDialog
+        <AbsenceDialog
           key={vacationEditor.id}
           state={state}
-          date={vacationEditor.date}
+          initialDate={vacationEditor.date}
           busy={busy}
           requestError={failure?.sessionId === vacationEditor.id ? error : ''}
-          onSave={(days) => saveVacationEditor(vacationEditor, days)}
+          onSave={(days, revision) => saveVacationEditor(vacationEditor, days, revision)}
           onClose={() => setVacationEditor((current) => current === vacationEditor ? null : current)}
         />
       )}

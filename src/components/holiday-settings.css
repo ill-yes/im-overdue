@@ -1,0 +1,16 @@
+.holiday-settings { min-width: 0; }
+.holiday-settings h3, .holiday-settings h4 { margin: 0 0 11px; font-size: 13px; }
+.holiday-settings fieldset { border: 0; min-width: 0; padding: 0; margin: 0; }
+.holiday-profile-fields { display: grid; grid-template-columns: 1fr 1.4fr; gap: 11px; }
+.holiday-rules { list-style: none; margin: 12px 0 0; padding: 0; }
+.holiday-rules li { display: flex; align-items: center; justify-content: space-between; gap: 8px 14px; padding: 10px 0; border-bottom: 1px solid #e6ebe5; }
+.holiday-rules li > span { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.holiday-rules strong { font-size: 12px; }
+.holiday-rules small { font-size: 11px; color: #6b8072; overflow-wrap: anywhere; }
+.holiday-rules li > div { display: flex; flex-wrap: wrap; gap: 3px; justify-content: flex-end; }
+.holiday-rules .button { font-size: 11px; height: auto; min-height: 30px; padding: 5px 7px; white-space: normal; text-align: left; }
+.holiday-exceptions { margin-top: 23px; padding-top: 19px; border-top: 1px solid #dbe4dc; }
+.holiday-name { margin-top: 12px; }
+.holiday-settings-notice { padding: 9px 11px; border: 1px solid #e9d6ad; border-radius: 5px; background: #fff9ec; color: #785824; font-size: 12px; line-height: 1.5; }
+.holiday-settings :is(button, input, select):focus-visible { outline: 3px solid #8ec9bb; outline-offset: 2px; }
+@media (max-width: 480px) { .holiday-profile-fields { grid-template-columns: 1fr; }.holiday-rules li { align-items: flex-start; flex-direction: column; }.holiday-rules li > div { width: 100%; }.holiday-rules .button { min-height: 36px; }.holiday-settings .dialog-actions .button { height: auto; min-height: 36px; white-space: normal; text-align: left; } }

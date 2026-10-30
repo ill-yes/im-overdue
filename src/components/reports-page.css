@@ -7,6 +7,8 @@
 .reports-page-tabs button { padding: 17px 0 14px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: #6b7f72; font: inherit; font-weight: 700; cursor: pointer; }
 .reports-page-tabs button[aria-selected="true"] { border-bottom-color: #26705a; color: #25644d; }
 .reports-page-tabs button:disabled { cursor: default; opacity: .6; }
+.reports-page-tabs { overflow-x: auto; }
+.reports-page-tabs button { flex-shrink: 0; }
 .reports-panel-content { padding: 23px 24px 25px; }
 .reports-panel-content[hidden] { display: none; }
 .reports-period-toolbar { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 27px; }
@@ -23,6 +25,11 @@
 .reports-totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 0; }
 .reports-totals dt { margin-bottom: 8px; color: #6b7f72; font-size: 12px; }
 .reports-totals dd { margin: 0; font-size: 18px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.reports-amounts { min-width: 0; }
+.reports-credit-breakdown { display: flex; flex-wrap: wrap; gap: 7px 18px; margin: 14px 0 0; padding-top: 11px; border-top: 1px solid #eef2ed; }
+.reports-credit-breakdown > div { display: flex; gap: 5px; font-size: 11px; color: #61776a; }
+.reports-credit-breakdown dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.reports-equation { margin: 14px 0 0; color: #405e4e; font-size: 12px; line-height: 1.6; }
 .reports-provisional { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 21px 0; }
 .reports-provisional > div { display: flex; align-items: baseline; gap: 17px; }
 .reports-provisional span, .reports-provisional p { margin: 0; color: #6b7f72; font-size: 12px; }

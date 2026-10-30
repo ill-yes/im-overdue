@@ -1,5 +1,6 @@
-import type { AppState, DayTotals, PeriodPart, PeriodSummary, WorkProfile } from './types.js';
+import type { AppState, DayAccounting, DayTotals, PeriodPart, PeriodSummary, WorkProfile } from './types.js';
 import { Temporal, addDays, dayBounds, datesInRange, localDate, today, weekStartFor } from './time.js';
+import { holidayForDate } from './holidays.js';
 
 export function profileFor(date: string, profiles: WorkProfile[]): WorkProfile {
   const selected = [...profiles].filter(p => p.effectiveFrom === null || p.effectiveFrom <= weekStartFor(date))
@@ -14,7 +15,7 @@ export function targetForDay(date: string, profiles: WorkProfile[]): number {
   if (index < 0) return 0;
   return Math.floor(p.weeklyMinutes / days.length) + (index < p.weeklyMinutes % days.length ? 1 : 0);
 }
-export function dayTotals(state: AppState, date: string): DayTotals {
+export function dayAccounting(state: AppState, date: string): DayAccounting {
   const bounds = dayBounds(date, state.settings.timezone);
   const start = Temporal.Instant.from(bounds.start).epochNanoseconds;
   const end = Temporal.Instant.from(bounds.end).epochNanoseconds;
@@ -25,8 +26,26 @@ export function dayTotals(state: AppState, date: string): DayTotals {
     return total + (overlap > 0n ? Number(overlap) / 60_000_000_000 : 0);
   }, 0);
   const targetMinutes = targetForDay(date, state.profiles);
-  const vacationMinutes = (state.vacations.find(v => v.date === date)?.fraction ?? 0) * targetMinutes;
-  return { actualMinutes, vacationMinutes, targetMinutes, balanceMinutes: actualMinutes + vacationMinutes - targetMinutes };
+  const holiday = holidayForDate(state, date);
+  const absence = state.absences?.find(value => value.date === date);
+  const requestedVacation = state.vacations.find(v => v.date === date)?.fraction ?? 0;
+  const vacationFraction = holiday ? 0 : requestedVacation;
+  const vacationMinutes = vacationFraction * targetMinutes;
+  const holidayMinutes = holiday ? targetMinutes : 0;
+  const compensationRequestedMinutes = absence?.compensation
+    ? absence.compensation.mode === 'fraction' ? absence.compensation.value * targetMinutes : absence.compensation.value
+    : 0;
+  const compensationMinutes = holiday ? 0 : Math.min(compensationRequestedMinutes, Math.max(0, targetMinutes - actualMinutes - vacationMinutes));
+  const sicknessMinutes = !holiday && absence?.sickness ? Math.max(0, targetMinutes - actualMinutes - vacationMinutes - compensationMinutes) : 0;
+  const uncoveredMinutes = Math.max(0, targetMinutes - actualMinutes - vacationMinutes - holidayMinutes - compensationMinutes - sicknessMinutes);
+  return { actualMinutes, vacationMinutes, targetMinutes,
+    balanceMinutes: actualMinutes + vacationMinutes + holidayMinutes + sicknessMinutes - targetMinutes,
+    holiday, holidayMinutes, sicknessMinutes, compensationRequestedMinutes, compensationMinutes, uncoveredMinutes, vacationFraction };
+}
+/** Preserve the legacy totals shape for existing API/model consumers. */
+export function dayTotals(state: AppState, date: string): DayTotals {
+  const { actualMinutes, vacationMinutes, targetMinutes, balanceMinutes } = dayAccounting(state, date);
+  return { actualMinutes, vacationMinutes, targetMinutes, balanceMinutes };
 }
 export function weekTotals(state: AppState, week: string): DayTotals {
   return datesInRange(week, addDays(week, 7)).reduce((sum, day) => {
@@ -45,6 +64,10 @@ export function activeWeeks(state: AppState, asOf = today(state.settings.timezon
   for (const vacation of state.vacations) {
     const week = weekStartFor(vacation.date);
     if (week <= currentWeek) weeks.add(week);
+  }
+  for (const absence of state.absences ?? []) {
+    const week = weekStartFor(absence.date);
+    if (week <= currentWeek && (absence.sickness || absence.compensation)) weeks.add(week);
   }
   return weeks;
 }

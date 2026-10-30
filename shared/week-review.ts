@@ -1,4 +1,4 @@
-import { dayTotals } from './calculations.js';
+import { dayAccounting } from './calculations.js';
 import { intersectsRange, toActivityInterval, toInstantRange } from './activities.js';
 import { Temporal, addDays, datesInRange, dayBounds, localDate, weekStartFor } from './time.js';
 import type { AppState, WeekReview } from './types.js';
@@ -17,8 +17,8 @@ export function weekReview(state: AppState, weekStart: string, now = Temporal.No
   const blocks = state.blocks.map(block => toInstantRange(block.start, block.end)).sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : 0);
   for (const date of datesInRange(weekStart, addDays(weekStart, 7))) {
     if (date > currentDate) continue;
-    const totals = dayTotals(state, date);
-    if (date < currentDate && totals.targetMinutes > totals.vacationMinutes && totals.actualMinutes === 0) {
+    const totals = dayAccounting(state, date);
+    if (date < currentDate && totals.uncoveredMinutes > 0 && (totals.actualMinutes === 0 || Boolean(state.absences?.find(value => value.date === date)))) {
       warnings.push({ date, kind: 'missing', message: 'Soll-Arbeitstag ohne erfasste Arbeitszeit.' });
     }
     if (totals.actualMinutes > 720) warnings.push({ date, kind: 'long', message: 'Mehr als zwölf Stunden Arbeitszeit erfasst.' });

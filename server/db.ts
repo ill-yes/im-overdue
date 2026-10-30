@@ -2,7 +2,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import type { Activity, AppState, CalendarNote, DataSource, RecentEntry, Source, VacationAllowance, VacationDay, WorkBlock, WorkProfile, WorkTemplate, WeekRecord } from '../shared/types.js';
+import type { AbsenceDay, AccountEntry, AccountOpening, HolidayOverride, HolidayProfile, Activity, AppState, CalendarNote, DataSource, RecentEntry, Source, VacationAllowance, VacationDay, WorkBlock, WorkProfile, WorkTemplate, WeekRecord } from '../shared/types.js';
 import { legacyDataSourceId, SOURCE_LABELS } from '../shared/data-sources.js';
 import { readUndoInfo } from './undo.js';
 
@@ -38,6 +38,7 @@ function initializeDatabase(db: DatabaseSync): void {
   if (!blockColumns.some(column => column.name === 'title')) db.exec("ALTER TABLE blocks ADD COLUMN title TEXT NOT NULL DEFAULT ''");
   if (!blockColumns.some(column => column.name === 'created_at')) db.exec('ALTER TABLE blocks ADD COLUMN created_at TEXT');
   migrateDataSources(db);
+  migrateAccounting(db);
   if (!db.prepare("SELECT value FROM meta WHERE key='revision'").get()) {
     db.exec('BEGIN IMMEDIATE');
     try {
@@ -83,6 +84,24 @@ function migrateDataSources(db: DatabaseSync): void {
   });
 }
 
+/** Additive migration: existing records, revision and undo are left untouched. */
+function migrateAccounting(db: DatabaseSync): void {
+  transaction(db, () => db.exec(`
+    CREATE TABLE IF NOT EXISTS account_opening (singleton INTEGER PRIMARY KEY CHECK(singleton=1), date TEXT NOT NULL, minutes INTEGER NOT NULL CHECK(minutes BETWEEN -1000000000 AND 1000000000));
+    CREATE TABLE IF NOT EXISTS account_entries (id TEXT PRIMARY KEY, date TEXT NOT NULL, kind TEXT NOT NULL CHECK(kind IN ('payout','correction')), minutes INTEGER NOT NULL CHECK(minutes BETWEEN -1000000000 AND 1000000000 AND minutes!=0 AND (kind!='payout' OR minutes<0)), reason TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS absences (date TEXT PRIMARY KEY, sickness INTEGER NOT NULL CHECK(sickness IN (0,1)), compensation_mode TEXT CHECK(compensation_mode IN ('fraction','minutes')), compensation_value REAL,
+      CHECK((compensation_mode IS NULL AND compensation_value IS NULL) OR (compensation_mode='fraction' AND compensation_value IN (0.5,1)) OR (compensation_mode='minutes' AND compensation_value BETWEEN 1 AND 10080 AND compensation_value=CAST(compensation_value AS INTEGER))));
+    CREATE TABLE IF NOT EXISTS holiday_profiles (id TEXT PRIMARY KEY, effective_from TEXT NOT NULL UNIQUE, region TEXT, rule_version INTEGER NOT NULL CHECK(rule_version=1));
+    CREATE TABLE IF NOT EXISTS holiday_overrides (date TEXT PRIMARY KEY, name TEXT);
+  `));
+}
+
+export function writeAbsence(db: DatabaseSync, day: AbsenceDay): void {
+  if (!day.sickness && !day.compensation) db.prepare('DELETE FROM absences WHERE date=?').run(day.date);
+  else db.prepare('INSERT INTO absences(date,sickness,compensation_mode,compensation_value) VALUES (?,?,?,?) ON CONFLICT(date) DO UPDATE SET sickness=excluded.sickness,compensation_mode=excluded.compensation_mode,compensation_value=excluded.compensation_value')
+    .run(day.date, Number(day.sickness), day.compensation?.mode ?? null, day.compensation?.value ?? null);
+}
+
 export function readDataSources(db: DatabaseSync): DataSource[] {
   return db.prepare(`SELECT d.id,d.type,d.name,
     (SELECT count(*) FROM activities a WHERE a.data_source_id=d.id) AS activityCount,
@@ -116,8 +135,14 @@ export function readState(db: DatabaseSync): AppState {
   const vacationAllowances = (db.prepare('SELECT year,entitlement_days,carryover_days FROM vacation_allowances ORDER BY year').all() as unknown as
     { year: number; entitlement_days: number; carryover_days: number }[])
     .map(({ year, entitlement_days, carryover_days }) => ({ year, entitlementDays: entitlement_days, carryoverDays: carryover_days })) as VacationAllowance[];
+  const accountOpening = (db.prepare('SELECT date,minutes FROM account_opening').get() as unknown as AccountOpening | undefined) ?? null;
+  const accountEntries = db.prepare('SELECT id,date,kind,minutes,reason FROM account_entries ORDER BY date,id').all() as unknown as AccountEntry[];
+  const absences = (db.prepare('SELECT date,sickness,compensation_mode AS mode,compensation_value AS value FROM absences ORDER BY date').all() as unknown as { date: string; sickness: number; mode: 'fraction' | 'minutes' | null; value: number | null }[])
+    .map(row => ({ date: row.date, sickness: Boolean(row.sickness), compensation: row.mode === null ? null : { mode: row.mode, value: row.value } })) as AbsenceDay[];
+  const holidayProfiles = db.prepare('SELECT id,effective_from AS effectiveFrom,region,rule_version AS ruleVersion FROM holiday_profiles ORDER BY effective_from').all() as unknown as HolidayProfile[];
+  const holidayOverrides = db.prepare('SELECT date,name FROM holiday_overrides ORDER BY date').all() as unknown as HolidayOverride[];
   const revision = Number(m.revision);
-  return { dataSources: readDataSources(db), revision, undo: readUndoInfo(db, revision), settings: { timezone: m.timezone }, profiles, activities, blocks, templates, recentEntries, weeks, notes, vacations, vacationAllowances };
+  return { dataSources: readDataSources(db), revision, undo: readUndoInfo(db, revision), settings: { timezone: m.timezone }, profiles, activities, blocks, templates, recentEntries, weeks, notes, vacations, vacationAllowances, accountOpening, accountEntries, absences, holidayProfiles, holidayOverrides };
 }
 
 export function transaction<T>(db: DatabaseSync, run: () => T): T {

@@ -1,3 +1,4 @@
+import { registerAccountingRoutes } from './accounting.js';
 import { serverProblem } from '../shared/server-messages.js';
 import express from 'express';
 import { backup, type DatabaseSync } from 'node:sqlite';
@@ -42,6 +43,7 @@ export function createApp(db: DatabaseSync, options: { origin?: string; auth?: A
   app.use('/api', express.json({ limit: '6mb', strict: true }));
   app.get('/api/state', (_req, res) => { res.json(readState(db)); });
   registerDataSourceRoutes(app, db);
+  registerAccountingRoutes(app, db);
   app.get('/api/timesheet', route((req, res) => {
     const from = validDate(req.query.from);
     const to = validDate(req.query.to);
@@ -63,7 +65,7 @@ export function createApp(db: DatabaseSync, options: { origin?: string; auth?: A
       const before = readState(db);
       const existing = new Map(before.vacations.map(day => [day.date, day.fraction]));
       for (const day of days) {
-        if (day.fraction !== null && targetForDay(day.date, before.profiles) === 0) throw bad('Urlaub ist nur an Tagen mit positivem Soll moeglich.', 'error.vacation.target');
+        if (day.fraction !== null && existing.get(day.date) !== day.fraction && targetForDay(day.date, before.profiles) === 0) throw bad('Urlaub ist nur an Tagen mit positivem Soll moeglich.', 'error.vacation.target');
       }
       const changes = days.filter(day => (existing.get(day.date) ?? null) !== day.fraction);
       if (!changes.length) return before;

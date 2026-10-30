@@ -73,9 +73,10 @@ test('main pages support direct hashes, history back and forward without modals'
 test('account tabs support arrow, Home and End keys with one tab stop', async ({ page }) => {
   await page.goto('/#/zeitkonto');
   const hours = reports(page).getByRole('tab', { name: 'Stundenkonto', exact: true });
+  const periods = reports(page).getByRole('tab', { name: 'Auswertungen', exact: true });
   const vacation = reports(page).getByRole('tab', { name: 'Urlaubskonto', exact: true });
   await hours.focus();
-  for (const [key, selected, other] of [['ArrowRight', vacation, hours], ['ArrowLeft', hours, vacation], ['End', vacation, hours], ['Home', hours, vacation]] as const) {
+  for (const [key, selected, other] of [['ArrowRight', periods, hours], ['ArrowRight', vacation, periods], ['ArrowLeft', periods, vacation], ['End', vacation, periods], ['Home', hours, vacation]] as const) {
     await page.keyboard.press(key);
     await expect(selected).toBeFocused();
     await expect(selected).toHaveAttribute('aria-selected', 'true');
@@ -94,6 +95,7 @@ for (const [instant, expectedDay, expectedMonth, expectedYear] of [
     expect(changed.status()).toBe(200);
     await page.clock.setFixedTime(new Date(instant));
     await page.goto('/#/zeitkonto');
+    await reports(page).getByRole('tab', { name: 'Auswertungen', exact: true }).click();
     await expect(reports(page).locator('.period-nav:visible')).toContainText(expectedMonth);
     await reports(page).getByRole('tab', { name: 'Urlaubskonto', exact: true }).click();
     await expect(reports(page).getByRole('combobox', { name: 'Urlaubsjahr', exact: true })).toHaveValue(expectedYear);
@@ -213,6 +215,7 @@ test('first account visit through a hash uses the selected historical calendar m
   await page.goto('/#/kalender');
   await chooseWeek(page, '2024-02-15');
   await page.evaluate(() => { window.location.hash = '#/zeitkonto'; });
+  await reports(page).getByRole('tab', { name: 'Auswertungen', exact: true }).click();
   await expect(reports(page).locator('.period-nav:visible')).toContainText('Februar 2024');
   await reports(page).getByRole('tab', { name: 'Urlaubskonto', exact: true }).click();
   await expect(reports(page).getByRole('combobox', { name: 'Urlaubsjahr', exact: true })).toHaveValue('2024');
@@ -344,6 +347,7 @@ for (const [kind, moves, from, to] of [
   test(`account ${kind} export inherits the exact selected period`, async ({ page }) => {
     await seed(page);
     await route(page, 'Zeitkonto').click();
+    await reports(page).getByRole('tab', { name: 'Auswertungen', exact: true }).click();
     await reports(page).getByRole('group', { name: 'Zeitraum', exact: true }).getByRole('button', { name: kind, exact: true }).click();
     for (let index = 0; index < moves; index++) await reports(page).getByRole('button', { name: 'Nächster Zeitraum', exact: true }).click();
     const received = page.waitForRequest(request => new URL(request.url()).pathname === '/api/timesheet');
@@ -413,9 +417,9 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 
     await capture('import-paste');
     await page.getByRole('dialog', { name: 'Aktivitäten importieren' }).getByRole('button', { name: 'Dialog schließen', exact: true }).click();
     await page.getByRole('button', { name: 'Weitere Kalenderaktionen', exact: true }).click();
-    await page.getByRole('menuitem', { name: 'Urlaub eintragen', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Abwesenheiten', exact: true }).click();
     await capture('vacation-form');
-    await page.getByRole('dialog', { name: 'Urlaub', exact: true }).getByRole('button', { name: 'Abbrechen', exact: true }).click();
+    await page.getByRole('dialog', { name: 'Abwesenheiten', exact: true }).getByRole('button', { name: 'Abbrechen', exact: true }).click();
     await route(page, 'Zeitkonto').click();
     await reports(page).getByRole('tab', { name: 'Urlaubskonto', exact: true }).click();
     await capture('vacation-account');

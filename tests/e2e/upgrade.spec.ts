@@ -67,6 +67,7 @@ test('Import → Tagesprüfung → Zeit zeichnen → Rückgängig → Ergebnis s
   await page.getByRole('dialog', { name: 'Woche abschließen', exact: true }).getByRole('button', { name: 'Woche abschließen', exact: true }).click();
   await expect(page.locator('.status-pill')).toHaveText('Abgeschlossen');
   await page.getByRole('navigation', { name: 'Hauptnavigation' }).getByRole('link', { name: 'Zeitkonto', exact: true }).click();
+  await page.getByRole('tab', { name: 'Auswertungen', exact: true }).click();
   await expect(page.locator('.reports-confirmed')).toContainText('1 abgeschlossene Woche');
   await page.getByRole('navigation', { name: 'Hauptnavigation' }).getByRole('link', { name: 'Kalender', exact: true }).click();
   await page.getByRole('group', { name: 'Kalenderansicht' }).getByRole('button', { name: 'Monat' }).click();

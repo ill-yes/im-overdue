@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { test, expect, chooseWeek, getState, newBlock } from './isolated-fixture';
 import type { AppState } from '../../shared/types.js';
 
-const vacation = (page: Page) => page.getByRole('dialog', { name: 'Urlaub', exact: true });
+const vacation = (page: Page) => page.getByRole('dialog', { name: 'Abwesenheiten', exact: true });
 const day = (page: Page, date: string) => page.locator(`[data-calendar-day="${date}"]`);
 
 async function mutate(page: Page, path: string, method: string, values: object): Promise<AppState> {
@@ -14,13 +14,17 @@ async function mutate(page: Page, path: string, method: string, values: object):
 }
 async function openVacation(page: Page, from: string, to = from) {
   await page.getByRole('button', { name: 'Weitere Kalenderaktionen', exact: true }).click();
-  await page.getByRole('menuitem', { name: 'Urlaub eintragen', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Abwesenheiten', exact: true }).click();
   await vacation(page).getByLabel('Von', { exact: true }).fill(from);
   await vacation(page).getByLabel('Bis einschließlich', { exact: true }).fill(to);
+  await applyVacation(page, '1');
   return vacation(page);
 }
+async function applyVacation(page: Page, fraction: '0.5' | '1') {
+  await vacation(page).locator('.absence-bulk').getByRole('combobox', { name: 'Urlaub', exact: true }).selectOption(fraction);
+}
 async function saveVacation(page: Page) {
-  await vacation(page).getByRole('button', { name: 'Urlaub eintragen', exact: true }).click();
+  await vacation(page).getByRole('button', { name: 'Abwesenheiten speichern', exact: true }).click();
   await expect(vacation(page)).toHaveCount(0);
 }
 async function closeWeek(page: Page) {
@@ -36,15 +40,18 @@ async function closeWeek(page: Page) {
 test('vacation preview skips non-workdays and lets a holiday and individual half-day be selected explicitly', async ({ page }, testInfo) => {
   await page.goto('/');
   await chooseWeek(page, '2026-09-28');
+  await mutate(page, '/api/holiday-overrides/2026-10-01', 'PUT', { name: 'Prüffeiertag' });
+  await page.reload();
+  await chooseWeek(page, '2026-09-28');
   const before = await getState(page);
   const dialog = await openVacation(page, '2026-09-28', '2026-10-04');
-  await expect(dialog.getByRole('combobox', { name: 'Tagesanteil', exact: true })).toHaveValue('1');
-  await expect(dialog.getByRole('checkbox')).toHaveCount(7);
-  await expect(dialog.getByRole('checkbox').nth(5)).toBeDisabled();
-  await expect(dialog.getByRole('checkbox').nth(6)).toBeDisabled();
-  await expect(dialog).toContainText('Feiertage bitte selbst abwählen');
+  await expect(dialog.locator('.absence-bulk').getByRole('combobox', { name: 'Urlaub', exact: true })).toHaveValue('1');
+  await expect(dialog.locator('.absence-day-label input[type=checkbox]')).toHaveCount(7);
+  await expect(dialog.locator('.absence-day-label input[type=checkbox]').nth(5)).toBeDisabled();
+  await expect(dialog.locator('.absence-day-label input[type=checkbox]').nth(6)).toBeDisabled();
+  await expect(dialog).toContainText('Prüffeiertag: Feiertagsgutschrift gilt');
   await dialog.getByRole('checkbox', { name: /Donnerstag, 1. Oktober 2026/ }).uncheck();
-  await dialog.getByRole('combobox', { name: 'Tagesanteil für Dienstag, 29. September 2026', exact: true }).selectOption('0.5');
+  await dialog.getByRole('combobox', { name: 'Urlaub Dienstag, 29. September 2026', exact: true }).selectOption('0.5');
   expect(await getState(page)).toEqual(before);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: testInfo.outputPath('vacation-preview-mobile.png') });
@@ -72,14 +79,15 @@ test('full vacation credits the target while real work stays additional; half-da
   await newBlock(page, '2026-09-28', '10:00', '11:00', 'Zweiter Block trotz Urlaub');
   const blocks = (await getState(page)).blocks;
   const full = await openVacation(page, '2026-09-28');
-  await expect(full).toContainText('Arbeit zählt zusätzlich');
-  await expect(full).toContainText('2 h Arbeit + 4 h Urlaub bei 4 h Soll');
+  await expect(full.locator('.absence-day-label')).toContainText('Soll 4 h · Arbeit 2 h');
+  await expect(full.locator('.absence-calculation > div').filter({ hasText: /^Urlaub/ })).toContainText('4 h');
+  await expect(full.locator('.absence-calculation > div').filter({ hasText: /^Tagessaldo/ })).toContainText('+2 h');
   await saveVacation(page);
   await expect(day(page, '2026-09-28').locator('.ov-day-totals')).toContainText('Arbeit 2:00 h');
-  await expect(day(page, '2026-09-28').locator('.ov-day-totals')).toContainText('Urlaub +4 h');
+  await expect(day(page, '2026-09-28').locator('[data-absence-kind=vacation]')).toContainText('4 h Gutschrift');
   const half = await openVacation(page, '2026-09-29');
-  await half.getByRole('combobox', { name: 'Tagesanteil', exact: true }).selectOption('0.5');
-  await expect(half.locator('.vacation-credit')).toHaveText('+2 h');
+  await applyVacation(page, '0.5');
+  await expect(half.locator('.absence-calculation > div').filter({ hasText: /^Urlaub/ })).toContainText('2 h');
   await saveVacation(page);
   expect((await getState(page)).blocks).toEqual(blocks);
   await page.screenshot({ path: testInfo.outputPath('vacation-gap-desktop.png') });
@@ -96,12 +104,12 @@ test('editing a badge can refuse reopening, then undo restores vacation and clos
   await closeWeek(page);
   const before = await getState(page);
   await day(page, '2026-09-28').getByRole('button', { name: 'Aktionen für Montag, 28. September 2026', exact: true }).click();
-  await page.getByRole('menuitem', { name: 'Urlaub am 28.09.2026 bearbeiten' }).click();
-  await vacation(page).getByRole('combobox', { name: 'Tagesanteil', exact: true }).selectOption('0.5');
+  await page.getByRole('menuitem', { name: 'Abwesenheiten am 28.09.2026', exact: true }).click();
+  await vacation(page).getByRole('combobox', { name: 'Urlaub Montag, 28. September 2026', exact: true }).selectOption('0.5');
   const refuse = async (prompt: import('@playwright/test').Dialog) => { if (/ersetzen/.test(prompt.message())) await prompt.accept(); else await prompt.dismiss(); };
   page.on('dialog', refuse);
-  await vacation(page).getByRole('button', { name: 'Urlaub eintragen', exact: true }).click();
-  await expect(vacation(page).getByRole('button', { name: 'Urlaub eintragen', exact: true })).toBeEnabled();
+  await vacation(page).getByRole('button', { name: 'Abwesenheiten speichern', exact: true }).click();
+  await expect(vacation(page).getByRole('button', { name: 'Abwesenheiten speichern', exact: true })).toBeEnabled();
   expect(await getState(page)).toEqual(before);
   page.off('dialog', refuse);
   page.on('dialog', prompt => prompt.accept());
@@ -124,12 +132,14 @@ test('editing a badge can refuse reopening, then undo restores vacation and clos
 test('a stale vacation submission retains its selection and cannot overwrite a concurrent write', async ({ page }) => {
   await page.goto('/');
   const dialog = await openVacation(page, '2026-09-28', '2026-09-29');
-  await dialog.getByRole('combobox', { name: 'Tagesanteil', exact: true }).selectOption('0.5');
+  await applyVacation(page, '0.5');
   const concurrent = await mutate(page, '/api/templates', 'POST', { title: 'Zweiter Tab', note: '', durationMinutes: 15 });
-  await dialog.getByRole('button', { name: 'Urlaub eintragen', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Abwesenheiten speichern', exact: true }).click();
   await expect(dialog.getByRole('alert')).toContainText('zwischenzeitlich geändert');
   await expect(dialog.getByLabel('Von', { exact: true })).toHaveValue('2026-09-28');
-  await expect(dialog.getByRole('combobox', { name: 'Tagesanteil', exact: true })).toHaveValue('0.5');
+  await expect(dialog.locator('.absence-bulk').getByRole('combobox', { name: 'Urlaub', exact: true })).toHaveValue('0.5');
+  await expect(dialog.getByRole('combobox', { name: 'Urlaub Montag, 28. September 2026', exact: true })).toHaveValue('0.5');
+  await expect(dialog.getByRole('combobox', { name: 'Urlaub Dienstag, 29. September 2026', exact: true })).toHaveValue('0.5');
   expect((await getState(page)).vacations).toEqual([]);
   expect((await getState(page)).templates).toEqual(concurrent.templates);
 });
@@ -140,14 +150,14 @@ test('pending vacation saves lock closing and repeat submits; a failed response 
   let release = () => {};
   const held = new Promise<void>(resolve => { release = resolve; });
   let writes = 0;
-  await page.route('**/api/vacations', async route => {
+  await page.route('**/api/absences', async route => {
     writes++;
     await held;
     await route.fulfill({ status: 503, json: { message: 'Urlaubsspeicherung fehlgeschlagen' } });
   });
   const before = await getState(page);
   try {
-    await dialog.getByRole('button', { name: 'Urlaub eintragen', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Abwesenheiten speichern', exact: true }).click();
     await expect.poll(() => writes).toBe(1);
     await expect(dialog.getByRole('button', { name: 'Dialog schließen', exact: true })).toBeDisabled();
     await page.keyboard.press('Escape');
@@ -165,7 +175,7 @@ test('pending vacation saves lock closing and repeat submits; a failed response 
 test('future vacation spanning a year boundary remains planning without future time debt', async ({ page }) => {
   await page.goto('/');
   const dialog = await openVacation(page, '2028-12-29', '2029-01-01');
-  await expect(dialog.getByRole('checkbox')).toHaveCount(4);
+  await expect(dialog.locator('.absence-day-label input[type=checkbox]')).toHaveCount(4);
   await saveVacation(page);
   expect((await getState(page)).vacations).toEqual([{ date: '2028-12-29', fraction: 1 }, { date: '2029-01-01', fraction: 1 }]);
   expect((await getState(page)).weeks).toEqual([]);
@@ -233,9 +243,10 @@ test('unsaved annual allowance survives refused year, tab, vacation and page nav
   await account.getByLabel('Jahresanspruch in Tagen', { exact: true }).fill('25.5');
   let confirmations = 0;
   let accept = false;
+  let expectedDiscard = 'Ungespeicherten Urlaubsanspruch verwerfen?';
   page.on('dialog', async prompt => {
     confirmations++;
-    expect(prompt.message()).toBe('Ungespeicherten Urlaubsanspruch verwerfen?');
+    expect(prompt.message()).toBe(expectedDiscard);
     await (accept ? prompt.accept() : prompt.dismiss());
   });
   const attempts = [
@@ -253,6 +264,7 @@ test('unsaved annual allowance survives refused year, tab, vacation and page nav
     },
   ];
   for (const [index, attempt] of attempts.entries()) {
+    expectedDiscard = index < 3 ? 'Ungespeicherten Urlaubsanspruch verwerfen?' : 'Ungespeicherte Änderungen verwerfen?';
     await attempt();
     expect(confirmations).toBe(index + 1);
     await expect(report).toBeVisible();
@@ -262,6 +274,7 @@ test('unsaved annual allowance survives refused year, tab, vacation and page nav
     expect(await getState(page)).toEqual(before);
   }
   accept = true;
+  expectedDiscard = 'Ungespeicherten Urlaubsanspruch verwerfen?';
   await account.getByRole('button', { name: 'Nächstes Urlaubsjahr', exact: true }).click();
   expect(confirmations).toBe(attempts.length + 1);
   await expect(account.getByRole('combobox', { name: 'Urlaubsjahr', exact: true })).toHaveValue('2027');
@@ -365,7 +378,7 @@ test('vacation and DST notes keep all seven calendar headers and work axes align
       else await expect(selected.locator('.ov-dst-note')).toContainText(`${hours} reale Std.`);
       const longLabel = new Intl.DateTimeFormat('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`));
       await selected.getByRole('button', { name: `Aktionen für ${longLabel}`, exact: true }).click();
-      await expect(page.getByRole('menuitem', { name: `Urlaub am ${date.slice(8)}.${date.slice(5, 7)}.${date.slice(0, 4)} bearbeiten`, exact: true })).toBeVisible();
+      await expect(page.getByRole('menuitem', { name: `Abwesenheiten am ${date.slice(8)}.${date.slice(5, 7)}.${date.slice(0, 4)}`, exact: true })).toBeVisible();
       await page.keyboard.press('Escape');
       const measurements = await page.locator('[data-calendar-day]').evaluateAll(elements => elements.map(element => {
         const head = element.querySelector('.ov-calendar-dayhead')!.getBoundingClientRect();

@@ -608,3 +608,14 @@
     max-height: 67vh;
   }
 }
+
+/* Every day reserves the tallest metadata row, preserving the common timeline. */
+.ov-calendar-dayhead { min-height: calc(86px + var(--ov-absence-height, 0px)); }
+.ov-calendar-dayhead > .day-absence-summary {
+  grid-column: 1 / -1;
+  align-self: start;
+  min-height: var(--ov-absence-height, 0px);
+}
+.ov-calendar-week:has(.ov-dst-note) .ov-calendar-dayhead {
+  min-height: calc(106px + var(--ov-absence-height, 0px));
+}

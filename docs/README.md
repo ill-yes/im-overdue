@@ -23,6 +23,16 @@ Check your settings, record a working day and review completed weeks.
 [Close weeks and understand balances](usage.md#close-weeks-and-read-balances) ·
 [Export a timesheet](usage.md#export-a-timesheet)
 
+### ⚖️ Manage your account and absences
+
+Start a running hours account, record payouts and corrections, and combine
+vacation, time off in lieu and sickness with the holidays that apply to you.
+
+[Set up your hours account](usage.md#hours-account) ·
+[Record absences](usage.md#absences) ·
+[Configure public holidays](usage.md#public-holidays) ·
+[Holiday rules and scope](holiday-rules.md)
+
 ### 🔌 Prepare activity imports
 
 Bring calendar, Slack or GitHub evidence from your own exporter into named sources.
@@ -43,4 +53,6 @@ Run the project, understand its boundaries and check your changes.
 
 - **Browser address rejected?** Check the [exact configured origin](docker.md#start-with-compose).
 - **Data directory rejected at startup?** Check [allowed files and permissions](docker.md#persistent-storage-and-permissions).
-- **Timesheet empty?** Check the [period and closed-week filter](usage.md#export-a-timesheet).
+- **No confirmed account balance?** Set an effective [opening balance](usage.md#hours-account).
+- **Holiday or absence credit unexpected?** Review [daily precedence](usage.md#absences) and [holiday exceptions](usage.md#public-holidays).
+- **Timesheet empty?** Check the [period, closed-week filter and optional account section](usage.md#export-a-timesheet).

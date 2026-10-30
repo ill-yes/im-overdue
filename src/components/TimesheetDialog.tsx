@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Download, Printer } from 'lucide-react';
-import { filteredTimesheetDays, timesheetCsv } from '../../shared/timesheet.js';
+import { accountCsv, filteredTimesheetDays, timesheetCsv } from '../../shared/timesheet.js';
 import { Temporal, periodBounds, weekStartFor } from '../../shared/time.js';
 import type { TimesheetOptions, TimesheetSnapshot } from '../../shared/types.js';
 import { Modal } from './Modal';
 import { TimesheetDocument } from './TimesheetDocument';
 import { errorText, useMessages, type TextValue } from '../i18n';
 import { exportMessages } from '../locales/exports';
+import { accountingExportMessages } from '../locales/accounting-export';
 import { downloadBlob } from '../download';
 import './timesheet-dialog.css';
 
@@ -37,20 +38,14 @@ function selectedRange(kind: Kind, anchor: string, from: string, through: string
 }
 
 function freezeSnapshot(value: TimesheetSnapshot): TimesheetSnapshot {
-  const snapshot = structuredClone(value);
-  for (const day of snapshot.days) {
-    day.blocks.forEach(Object.freeze);
-    Object.freeze(day.blocks);
-    Object.freeze(day.totals);
-    Object.freeze(day);
-  }
-  Object.freeze(snapshot.days);
-  for (const part of [snapshot.summary.confirmed, snapshot.summary.provisional]) {
-    Object.freeze(part.weeks);
-    Object.freeze(part);
-  }
-  Object.freeze(snapshot.summary);
-  return Object.freeze(snapshot);
+  const freeze = <T,>(entry: T): T => {
+    if (entry && typeof entry === 'object') {
+      Object.values(entry).forEach(freeze);
+      Object.freeze(entry);
+    }
+    return entry;
+  };
+  return freeze(structuredClone(value));
 }
 
 export function TimesheetDialog({ anchor, initialKind = 'month', preset, onLoad, onClose }: {
@@ -61,12 +56,13 @@ export function TimesheetDialog({ anchor, initialKind = 'month', preset, onLoad,
   onClose: () => void;
 }) {
   const { t, m, text, language } = useMessages(exportMessages);
+  const { t: a } = useMessages(accountingExportMessages);
   const [kind, setKind] = useState<Kind>(preset?.kind ?? initialKind);
   const [date, setDate] = useState(preset?.from ?? anchor);
   const initial = preset ?? selectedRange(initialKind, anchor, '', '');
   const [from, setFrom] = useState(initial.from ?? anchor);
   const [through, setThrough] = useState(initial.to ? Temporal.PlainDate.from(initial.to).subtract({ days: 1 }).toString() : anchor);
-  const [options, setOptions] = useState<TimesheetOptions>({ includeTitles: true, includeBlockNotes: false, includeDayNotes: false, includeWeekNotes: false, closedOnly: true, name: '' });
+  const [options, setOptions] = useState<TimesheetOptions>({ includeTitles: true, includeBlockNotes: false, includeDayNotes: false, includeWeekNotes: false, closedOnly: true, includeAccount: false, name: '' });
   const [retry, setRetry] = useState(0);
   const [result, setResult] = useState<{ selection: Selection; snapshot?: TimesheetSnapshot; error?: TextValue } | null>(null);
   const [exportError, setExportError] = useState<TextValue>('');
@@ -99,6 +95,7 @@ export function TimesheetDialog({ anchor, initialKind = 'month', preset, onLoad,
   const error = result?.selection === selection ? result.error : undefined;
   const loading = !!rangeFrom && !!rangeTo && !snapshot && !error;
   const canExport = !!snapshot && filteredTimesheetDays(snapshot, options).length > 0;
+  const canPrint = canExport || (!!snapshot?.account?.opening && !!options.includeAccount);
   function chooseKind(next: Kind) {
     if (next === 'custom' && rangeFrom && rangeTo) {
       setFrom(rangeFrom);
@@ -118,6 +115,14 @@ export function TimesheetDialog({ anchor, initialKind = 'month', preset, onLoad,
       downloadBlob(blob, filename);
     } catch { setExportError(m('csvError')); }
   }
+  function downloadAccount() {
+    if (!snapshot?.account?.opening || !options.includeAccount) return;
+    setExportError('');
+    try {
+      const blob = new Blob([accountCsv(snapshot, language)], { type: 'text/csv;charset=utf-8' });
+      downloadBlob(blob, `${a('accountFilename')}_${snapshot.from}_${Temporal.PlainDate.from(snapshot.to).subtract({ days: 1 }).toString()}.csv`);
+    } catch { setExportError(m('csvError')); }
+  }
   return <>
     <Modal title={t('exportTitle')} onClose={onClose} className="workflow-modal timesheet-dialog">
       <div className="dialog-scroll timesheet-content">
@@ -130,6 +135,7 @@ export function TimesheetDialog({ anchor, initialKind = 'month', preset, onLoad,
           </div>
           <div className="timesheet-export-options"><label className="field">{t('name')} <span className="timesheet-optional">{t('optional')}</span><input type="text" maxLength={160} value={options.name} autoComplete="off" onChange={event => setOptions({ ...options, name: event.target.value })} /></label>
             <fieldset><legend>{t('content')}</legend>{([['includeTitles', t('includeTitles')], ['includeBlockNotes', t('includeBlockNotes')], ['includeDayNotes', t('includeDayNotes')], ['includeWeekNotes', t('includeWeekNotes')], ['closedOnly', t('closedOnly')]] as const).map(([field, label]) => <label className="timesheet-check" key={field}><input type="checkbox" checked={options[field]} onChange={event => setOptions({ ...options, [field]: event.target.checked })} />{label}</label>)}</fieldset>
+            <label className="timesheet-check timesheet-account-option"><input type="checkbox" checked={!!options.includeAccount} onChange={event => setOptions({ ...options, includeAccount: event.target.checked })} />{a('includeAccount')}</label>
           </div>
         </div>
         <section className="timesheet-preview" aria-label={t('preview')} aria-busy={loading}>
@@ -139,8 +145,8 @@ export function TimesheetDialog({ anchor, initialKind = 'month', preset, onLoad,
         </section>
       </div>
       {exportError && <div className="workflow-feedback" role="alert">{text(exportError)}</div>}
-      <footer className="dialog-actions workflow-actions timesheet-actions"><button type="button" className="button secondary" onClick={onClose}>{t('close')}</button><button type="button" className="button secondary" disabled={!canExport} onClick={download}><Download size={16} />CSV</button><button type="button" className="button primary" disabled={!canExport} onClick={() => { if (!canExport) return; setExportError(''); try { window.print(); } catch { setExportError(m('printError')); } }}><Printer size={16} />{t('print')}</button></footer>
+      <footer className="dialog-actions workflow-actions timesheet-actions"><button type="button" className="button secondary" onClick={onClose}>{t('close')}</button><button type="button" className="button secondary" disabled={!canExport} onClick={download}><Download size={16} />CSV</button>{options.includeAccount && <button type="button" className="button secondary" disabled={!snapshot?.account?.opening} onClick={downloadAccount}><Download size={16} />{a('downloadAccount')}</button>}<button type="button" className="button primary" disabled={!canPrint} onClick={() => { if (!canPrint) return; setExportError(''); try { window.print(); } catch { setExportError(m('printError')); } }}><Printer size={16} />{t('print')}</button></footer>
     </Modal>
-    {snapshot && canExport && createPortal(<div className="timesheet-print" aria-hidden="true"><TimesheetDocument snapshot={snapshot} options={options} /></div>, document.body)}
+    {snapshot && canPrint && createPortal(<div className="timesheet-print" aria-hidden="true"><TimesheetDocument snapshot={snapshot} options={options} /></div>, document.body)}
   </>;
 }

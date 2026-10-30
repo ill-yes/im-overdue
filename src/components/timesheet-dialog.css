@@ -22,6 +22,8 @@
 .timesheet-coverage, .timesheet-draft-notice { margin: 0 0 10px; line-height: 1.5; font-size: 12px; }
 .timesheet-coverage { color: #54645e; }
 .timesheet-draft-notice { color: #765c32; }
+.timesheet-credit-note { margin: 0 0 10px; color: #54645e; font-size: 11px; line-height: 1.5; }
+.timesheet-credit-breakdown { display: block; margin-top: 3px; color: #54645e; font-size: 11px; font-weight: 400; line-height: 1.5; white-space: normal; }
 .timesheet-table-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
 .timesheet-table { width: 100%; min-width: 680px; border-collapse: collapse; table-layout: fixed; font-size: 12px; line-height: 1.45; }
 .timesheet-date-column { width: 14.5%; }
@@ -54,6 +56,22 @@
 .timesheet-load-error p { margin-top: 0; overflow-wrap: anywhere; }
 .timesheet-actions > :first-child { margin-right: auto; }
 .timesheet-print { display: none; }
+.timesheet-account-option { margin-top: 14px; padding-top: 12px; border-top: 1px solid #dce3dc; }
+.timesheet-absence { line-height: 1.5; }
+.timesheet-uncovered { color: #765c32; }
+.timesheet-account { margin-top: 24px; border-top: 2px solid #176e60; padding-top: 12px; }
+.timesheet-account h4 { margin: 0 0 8px; font-size: 16px; }
+.timesheet-account-table { border-collapse: collapse; width: 100%; min-width: 550px; line-height: 1.45; }
+.timesheet-account-table th, .timesheet-account-table td { padding: 6px 4px; text-align: left; border-bottom: 1px solid #e1e5e1; vertical-align: top; }
+.timesheet-account-table thead th { color: #304c40; border-bottom-color: #aab9b1; }
+.timesheet-account-table th:first-child, .timesheet-account-table td:first-child { width: 100px; white-space: nowrap; }
+.timesheet-account-table th:last-child, .timesheet-account-table td:last-child { text-align: right; white-space: nowrap; }
+.timesheet-account-table tbody th { font-weight: 500; }
+.timesheet-account-table .timesheet-account-group th { padding-top: 13px; text-align: left; color: #304c40; font-weight: 750; }
+.timesheet-account-open, .timesheet-account-planned { color: #765c32; }
+.timesheet-account-table .timesheet-account-total { background: #f0f5f1; font-weight: 750; }
+.timesheet-account-table .timesheet-account-total th { font-weight: 750; }
+.timesheet-account-reason { display: block; white-space: pre-wrap; overflow-wrap: anywhere; font-weight: 400; color: #5b6962; }
 
 @media (max-width: 700px) {
   .timesheet-controls { grid-template-columns: minmax(0, 1fr); gap: 18px; }
@@ -69,6 +87,7 @@
   .timesheet-actions { flex-wrap: wrap; }
   .timesheet-actions > :first-child { margin-right: 0; flex: 0 0 100%; }
   .timesheet-actions > .button { padding-left: 10px; padding-right: 10px; }
+  .timesheet-actions > .button:not(:first-child) { flex: 1 1 auto; }
 }
 
 @media print {
@@ -78,11 +97,13 @@
   body:has(> .timesheet-print) > *:not(.timesheet-print) { display: none !important; }
   body > .timesheet-print { display: block !important; width: 100%; }
   .timesheet-print .timesheet-document { width: 100%; max-width: none; font-size: 9pt; }
-  .timesheet-print .timesheet-document-header { flex-direction: row; gap: 12pt; border-bottom-width: 1pt; padding-bottom: 8pt; margin-bottom: 8pt; break-inside: avoid; }
+  .timesheet-print .timesheet-document-header { flex-direction: row; gap: 12pt; border-bottom-width: 1pt; padding-bottom: 5pt; margin-bottom: 5pt; break-inside: avoid; }
   .timesheet-print .timesheet-document h3 { font-size: 17pt; line-height: 1.2; }
   .timesheet-print .timesheet-person { margin-top: 3pt; font-size: 11pt; }
   .timesheet-print .timesheet-document-period { margin-top: 3pt; font-size: 9pt; }
   .timesheet-print .timesheet-coverage, .timesheet-print .timesheet-draft-notice { font-size: 9pt; margin-bottom: 6pt; }
+  .timesheet-print .timesheet-credit-note { font-size: 8pt; line-height: 10pt; margin-bottom: 2pt; }
+  .timesheet-print .timesheet-credit-breakdown { font-size: 8pt; line-height: 10pt; margin-top: 1pt; }
   .timesheet-print .timesheet-table-scroll { overflow: visible; }
   .timesheet-print .timesheet-table { width: 100%; min-width: 0; font-size: 9pt; line-height: 10.5pt; }
   .timesheet-print .timesheet-table thead { display: table-header-group; }
@@ -94,7 +115,15 @@
   .timesheet-print .timesheet-block-line { grid-template-columns: 72pt minmax(0, 1fr); gap: 5pt; }
   .timesheet-print .timesheet-block + .timesheet-block { margin-top: 0; }
   .timesheet-print .timesheet-note { margin: 2pt 0; font-size: 9pt; line-height: 11pt; orphans: 2; widows: 2; }
-  .timesheet-print .timesheet-table tfoot th, .timesheet-print .timesheet-table tfoot td { padding-top: 5pt; }
-  .timesheet-print .timesheet-document-footer { font-size: 8pt; line-height: 10pt; margin-top: 7pt; break-inside: avoid; }
-  .timesheet-print .timesheet-document-footer p { margin: 2pt 0; }
+  .timesheet-print .timesheet-table tfoot th, .timesheet-print .timesheet-table tfoot td { padding-top: 3pt; }
+  .timesheet-print .timesheet-document-footer { font-size: 8pt; line-height: 10pt; margin-top: 3pt; break-inside: avoid; }
+  .timesheet-print .timesheet-document-footer p { margin: 1pt 0; }
+  .timesheet-print .timesheet-account { margin-top: 14pt; padding-top: 8pt; break-inside: auto; }
+  .timesheet-print .timesheet-account h4 { font-size: 12pt; break-after: avoid; }
+  .timesheet-print .timesheet-account .timesheet-coverage, .timesheet-print .timesheet-account .timesheet-draft-notice { break-after: avoid; }
+  .timesheet-print .timesheet-account-table { min-width: 0; font-size: 9pt; }
+  .timesheet-print .timesheet-account-table thead { display: table-header-group; }
+  .timesheet-print .timesheet-account-table tr { break-inside: avoid; }
+  .timesheet-print .timesheet-account-table .timesheet-account-group { break-after: avoid; }
+  .timesheet-print .timesheet-account-table th, .timesheet-print .timesheet-account-table td { padding: 3pt; }
 }

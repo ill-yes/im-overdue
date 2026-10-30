@@ -120,6 +120,7 @@ test('example monthly balances, imported activity filters and reopened weeks', a
   await expect(first.locator('.mo-day-activity')).toContainText('2 Aktivitäten');
   expect(await summary.innerText()).toBe(monthlyTotals);
   await page.getByRole('navigation', { name: 'Hauptnavigation' }).getByRole('link', { name: 'Zeitkonto', exact: true }).click();
+  await page.getByRole('tab', { name: 'Auswertungen', exact: true }).click();
   await expect(page.locator('.period-nav:visible')).toContainText('Oktober 2026');
   await expect(page.locator('.reports-balance strong')).toHaveText('+1 h');
   await page.getByRole('navigation', { name: 'Hauptnavigation' }).getByRole('link', { name: 'Kalender', exact: true }).click();

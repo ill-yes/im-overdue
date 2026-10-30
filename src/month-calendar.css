@@ -249,3 +249,8 @@
     min-height: 128px;
   }
 }
+
+.mo-day .day-absence-item {
+  padding: 3px;
+  font-size: 9px;
+}

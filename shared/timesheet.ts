@@ -1,6 +1,7 @@
 import { translate, type Language } from './i18n.js';
 import { timesheetMessages } from './timesheet-messages.js';
-import { activeWeeks, dayTotals } from './calculations.js';
+import { activeWeeks, dayAccounting, dayTotals } from './calculations.js';
+import { accountPeriod } from './accounting.js';
 import { noteText } from './notes.js';
 import { Temporal, datesInRange, dayBounds, localDate, localTimeWithOffset, offsetAt, weekStartFor } from './time.js';
 import type { AppState, PeriodPart, PeriodSummary, TimesheetDay, TimesheetOptions, TimesheetSnapshot } from './types.js';
@@ -46,10 +47,11 @@ export function createTimesheetSnapshot(state: AppState, from: string, toExclusi
     }).sort((a, b) => Temporal.Instant.compare(a.start, b.start));
     const week = weekStartFor(date);
     return { date, status: closed.has(week) ? 'closed' : active.has(week) ? 'open' : 'untouched',
-      blocks, totals: dayTotals(state, date), vacationFraction: state.vacations.find(vacation => vacation.date === date)?.fraction ?? 0,
+      blocks, totals: dayTotals(state, date), accounting: dayAccounting(state, date), vacationFraction: state.vacations.find(vacation => vacation.date === date)?.fraction ?? 0,
       dayNote: noteText(state.notes, 'day', date), weekNote: noteText(state.notes, 'week', week) };
   });
-  return { revision: state.revision, timezone, createdAt, from, to: toExclusive, days, summary: summaryForDays(days) };
+  return structuredClone({ revision: state.revision, timezone, createdAt, from, to: toExclusive, days, summary: summaryForDays(days),
+    account: accountPeriod(state, from, toExclusive, localDate(createdAt, timezone)) });
 }
 
 export function filteredTimesheetDays(snapshot: TimesheetSnapshot, options: Pick<TimesheetOptions, 'closedOnly'>): TimesheetDay[] {
@@ -82,6 +84,7 @@ export function timesheetCsv(snapshot: TimesheetSnapshot, options: TimesheetOpti
   if (options.includeBlockNotes) header.push(t('blockNotes'));
   if (options.includeDayNotes) header.push(t('dayNote'));
   if (options.includeWeekNotes) header.push(t('weekNote'));
+  header.push(t('holidayMinutes'), t('sicknessMinutes'), t('compensationMinutes'), t('uncoveredMinutes'));
   const rows = [header.map(csvText).join(';')];
   for (const day of filteredTimesheetDays(snapshot, options)) {
     const text = (value: string) => csvText(value);
@@ -93,14 +96,54 @@ export function timesheetCsv(snapshot: TimesheetSnapshot, options: TimesheetOpti
     if (options.includeBlockNotes) row.push(text(day.blocks.map(block => block.note).join('\n')));
     if (options.includeDayNotes) row.push(text(day.dayNote));
     if (options.includeWeekNotes) row.push(text(day.weekNote));
+    row.push(...[day.accounting?.holidayMinutes ?? 0, day.accounting?.sicknessMinutes ?? 0,
+      day.accounting?.compensationMinutes ?? 0, day.accounting?.uncoveredMinutes ?? 0].map(String));
     rows.push(row.join(';'));
   }
   const summary = timesheetSummary(snapshot, options);
-  for (const [label, part] of [[t('confirmedTotal'), summary.confirmed], [t('provisionalTotal'), summary.provisional]] as const) {
+  for (const [label, part, closed] of [[t('confirmedTotal'), summary.confirmed, true], [t('provisionalTotal'), summary.provisional, false]] as const) {
     const row = [csvText(''), csvText(label), csvText(t('touchedDaysOnly')), String(part.actualMinutes), String(part.vacationMinutes),
       String(part.targetMinutes), String(part.balanceMinutes), csvText('')];
-    while (row.length < header.length) row.push(csvText(''));
+    while (row.length < header.length - 4) row.push(csvText(''));
+    const matching = filteredTimesheetDays(snapshot, options).filter(day => day.status !== 'untouched' && (day.status === 'closed') === closed);
+    row.push(...(['holidayMinutes', 'sicknessMinutes', 'compensationMinutes', 'uncoveredMinutes'] as const)
+      .map(key => String(matching.reduce((sum, day) => sum + (day.accounting?.[key] ?? 0), 0))));
     rows.push(row.join(';'));
+  }
+  return `\uFEFF${rows.join('\r\n')}\r\n`;
+}
+
+export interface AccountExportRow {
+  date: string;
+  kind: 'startBalance' | 'endBalance' | 'opening' | 'work' | 'payout' | 'correction' | 'provisionalTotal' | 'plannedCompensation' | 'plannedEntries';
+  status: 'closed' | 'open' | 'planned';
+  minutes: number | null;
+  reason: string;
+}
+
+/** A separate, uniform ledger schema; the daily timesheet filter never alters it. */
+export function accountExportRows(snapshot: TimesheetSnapshot): AccountExportRow[] {
+  const account = snapshot.account;
+  if (!account) return [];
+  const through = Temporal.PlainDate.from(account.to).subtract({ days: 1 }).toString();
+  const rows: AccountExportRow[] = [{ date: account.from, kind: 'startBalance', status: 'closed', minutes: account.startMinutes, reason: '' }];
+  rows.push(...account.movements.filter(movement => movement.date <= account.asOf).map(movement => ({ ...movement, status: 'closed' as const })));
+  rows.push({ date: account.endMinutes !== null ? account.asOf : through, kind: 'endBalance', status: 'closed', minutes: account.endMinutes, reason: '' },
+    { date: through, kind: 'provisionalTotal', status: 'open', minutes: account.provisionalMinutes, reason: '' });
+  rows.push(...account.movements.filter(movement => movement.date > account.asOf).map(movement => ({ ...movement, status: 'planned' as const })));
+  rows.push(
+    { date: through, kind: 'plannedCompensation', status: 'planned', minutes: account.plannedCompensationMinutes, reason: '' },
+    { date: through, kind: 'plannedEntries', status: 'planned', minutes: account.plannedEntryMinutes, reason: '' });
+  return rows;
+}
+
+export function accountCsv(snapshot: TimesheetSnapshot, language: Language = 'en'): string {
+  const t = (key: keyof typeof timesheetMessages) => translate(timesheetMessages, key, {}, language);
+  const header = ['date', 'entryType', 'status', 'accountMinutes', 'reason', 'asOf'] as const;
+  const rows = [header.map(key => csvText(t(key))).join(';')];
+  for (const row of accountExportRows(snapshot)) {
+    rows.push([csvText(row.date), csvText(t(row.kind)), csvText(t(row.status)), row.minutes === null ? '' : String(row.minutes),
+      csvText(row.reason), csvText(snapshot.account!.asOf)].join(';'));
   }
   return `\uFEFF${rows.join('\r\n')}\r\n`;
 }
