@@ -139,7 +139,9 @@ lädt keine externen Schriften, Analyse- oder Fremddienst-APIs.
 | `src/App.tsx`, Header und Arbeitsplatzkomponenten | Navigation, Dialogsitzungen und Mutationen |
 | Kalender-Ansichtsmodelle und `src/calendar-model.ts` | Reine Wochen-, Marker- und Gestenberechnungen |
 | `src/components/import/` | Vorschauzeilen, Vergleich, Zusammenfassung und reine Vorschaumodelle |
-| `server/app.ts` und HTTP-/Sicherheits-/Validierungshelfer | Routen, Transaktionen, Zugriffsschutz und Eingabefehler |
+| `server/app.ts` | App-Aufbau: Sicherheit, Anmeldung, Größenlimits und Routenregistrierung |
+| Routenmodule in `server/` (`blocks.ts`, `accounting.ts`, …) | Eine `register…Routes`-Funktion je Bereich; Schreibzugriffe laufen über `mutate()` in `state-changes.ts` |
+| HTTP-/Sicherheits-/Validierungshelfer | Transaktionen, Zugriffsschutz und Eingabefehler |
 | `shared/` | Zeit, Berechnung, Importvertrag, Prüfung, Wiederverwendung und Export |
 
 Pointer-Steuerung, Fokus und Scrollen bleiben in Kalenderkomponenten;

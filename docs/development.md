@@ -137,7 +137,9 @@ fonts, analytics or third-party service APIs.
 | `src/App.tsx`, header and workspace components | Navigation, dialog sessions and mutations |
 | Calendar view models and `src/calendar-model.ts` | Pure visible-week, marker and gesture calculations |
 | `src/components/import/` | Preview rows, comparisons, summary and pure preview models |
-| `server/app.ts` and HTTP/security/validation helpers | Routes, transactions, access checks and input errors |
+| `server/app.ts` | App assembly: security, authentication, body limits and route registration |
+| Route modules in `server/` (`blocks.ts`, `accounting.ts`, …) | One `register…Routes` function per area; writes go through `mutate()` in `state-changes.ts` |
+| HTTP/security/validation helpers | Transactions, access checks and input errors |
 | `shared/` | Time, calculations, import contracts, review, reuse and export rules |
 
 Keep pointer control, focus and scrolling in calendar components; view models

@@ -4,11 +4,12 @@ import { randomUUID } from 'node:crypto';
 import { SOURCES, type Activity, type DataPage, type ImportCounts, type ImportInput, type ImportPackage, type Source } from '../shared/types.js';
 import { SOURCE_LABELS } from '../shared/data-sources.js';
 import { Temporal } from '../shared/time.js';
-import { ACTIVITY_TIME_ORDER, bumpRevision, readState } from './db.js';
+import { ACTIVITY_TIME_ORDER, bumpRevision, readState, transaction } from './db.js';
 import { bad, body, HttpError, route } from './http.js';
-import { mutate, UNCHANGED } from './state-changes.js';
+import { mutate, revision, UNCHANGED } from './state-changes.js';
 import { clearUndo } from './undo.js';
-import { importDuplicates, previewImport } from './import.js';
+import { analyzeImport, importDuplicates, previewImport } from './import.js';
+import { parseImportInput } from './validation.js';
 
 const pageSize = 50;
 const activityColumns = 'source,id,start,end,title,url';
@@ -136,4 +137,24 @@ export function commitImport(db: DatabaseSync, input: ImportInput): ReturnType<t
   }
   bumpRevision(db); clearUndo(db);
   return readState(db);
+}
+
+export function registerImportRoutes(app: Express, db: DatabaseSync): void {
+  app.post('/api/import/analyze', route((req, res) => {
+    res.json(analyzeImport(parseImportInput(body(req))));
+  }));
+  app.post('/api/import/preview', route((req, res) => {
+    const input = parseImportInput(body(req));
+    const old = readState(db);
+    res.json(previewImport(input, old.activities, old.revision, old.dataSources));
+  }));
+  app.post('/api/import/commit', route((req, res) => {
+    const b = body(req);
+    const input = parseImportInput(b);
+    const state = transaction(db, () => {
+      revision(db, b);
+      return commitImport(db, input);
+    });
+    res.json(state);
+  }));
 }
