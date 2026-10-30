@@ -107,9 +107,11 @@ Das Passwort liegt in `.env` oder der Docker-/Unraid-Konfiguration. Ein Docker-
 Administrator kann es lesen; Unraids maskiertes Feld verschlüsselt es nicht.
 Die App schreibt es weder in Logs noch SQLite-Backups. Sitzungen liegen für
 feste 24 Stunden nur im Arbeitsspeicher. Abmelden entwertet die eigene Sitzung,
-ein Neustart alle. Es gelten instanzweit höchstens 64 Sitzungen, zehn
-Loginversuche pro fünf Minuten und eine gleichzeitige Passwortprüfung.
-Bestehende Sitzungen bleiben bei erreichtem Loginlimit nutzbar.
+ein Neustart alle. Es gelten höchstens 64 Sitzungen, zehn Loginversuche pro
+Client-Adresse und fünf Minuten (IPv6 pro /56-Präfix) und eine gleichzeitige
+Passwortprüfung. Ein Client am Limit sperrt keine anderen Clients aus, und
+bestehende Sitzungen bleiben nutzbar. Ein erfolgreicher Login setzt den Zähler
+des Clients zurück.
 
 Der öffentliche Healthcheck verwendet `/api/health` ohne Nutzerdaten. Docker
 stoppt per `SIGTERM`; Node schließt HTTP und SQLite. Außerhalb Docker bleibt
@@ -140,7 +142,18 @@ Der ursprüngliche Host einschließlich abweichendem Außenport muss ankommen;
 der Browser-Origin muss unverändert bleiben. `X-Forwarded-Host` und
 `X-Forwarded-Proto` werden nicht vertraut. HTTPS als konfigurierter Origin setzt
 das Sitzungscookie auf `Secure`; direktes HTTP ist dann kein alternativer
-Loginweg. Eine zusätzliche Trust-Proxy-Einstellung ist nicht nötig.
+Loginweg.
+
+Hinter einem Proxy kommen alle Logins von der Adresse des Proxys, alle Browser
+teilen sich also ein Loginlimit. Damit jeder Browser einzeln begrenzt wird, setze
+`IM_OVERDUE_TRUSTED_PROXIES` auf Adresse oder Bereich des Proxys, zum Beispiel
+`172.16.0.0/12` für einen Proxy-Container im Docker-Bridge-Netz, und lass den
+Proxy `X-Forwarded-For` setzen (Nginx: `proxy_set_header X-Forwarded-For
+$proxy_add_x_forwarded_for;`). Der Wert ist eine kommagetrennte Liste von
+IP-Adressen oder CIDR-Bereichen. Die App liest `X-Forwarded-For` nur für das
+Loginlimit und nur von diesen Gegenstellen; Host-, Origin- und Protokollprüfung
+bleiben unverändert. Trage keine Bereiche ein, aus denen nicht vertrauenswürdige
+Clients direkt verbinden können, denn sie könnten sonst ihre Adresse selbst wählen.
 
 ## Unraid
 

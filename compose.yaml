@@ -7,6 +7,7 @@ services:
     environment:
       IM_OVERDUE_ORIGIN: ${IM_OVERDUE_ORIGIN:?Set the canonical app URL in .env}
       IM_OVERDUE_PASSWORD: ${IM_OVERDUE_PASSWORD:?Set a private password in .env}
+      IM_OVERDUE_TRUSTED_PROXIES: ${IM_OVERDUE_TRUSTED_PROXIES:-}
       PUID: ${PUID:-99}
       PGID: ${PGID:-100}
     volumes:

@@ -42,9 +42,11 @@ npm start
 | `IM_OVERDUE_DB` | SQLite-Pfad, Standard `data/im-overdue.sqlite` |
 | `IM_OVERDUE_ORIGIN` | Genauer HTTP(S)-Browser-Origin, für Netzwerkbetrieb erforderlich |
 | `IM_OVERDUE_PASSWORD` | Im Netzwerkbetrieb erforderlich; 12–256 Zeichen, höchstens 1024 UTF-8-Bytes |
+| `IM_OVERDUE_TRUSTED_PROXIES` | Optional, kommagetrennte Proxy-IPs/CIDR-Bereiche, deren `X-Forwarded-For` den Client fürs Loginlimit bestimmt |
 
 Unvollständige Netzwerkkonfiguration scheitert vor dem Datenbankstart.
-Weitergeleiteten Headern wird nicht vertraut. Die [Docker-Anleitung](docker.md)
+Weitergeleiteten Headern wird nicht vertraut, außer `X-Forwarded-For` von
+konfigurierten vertrauenswürdigen Proxys für das Loginlimit. Die [Docker-Anleitung](docker.md)
 erklärt Origin und HTTPS. Starte niemals zwei Prozesse mit derselben Datenbank.
 Datenbank, WAL/SHM, Backups, `.env` und generierte Ausgaben gehören nicht in Git.
 

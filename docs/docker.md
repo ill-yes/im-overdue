@@ -103,9 +103,10 @@ The password is stored in `.env` or Docker/Unraid configuration. A Docker
 administrator can read it; Unraid's masked field does not encrypt it. The app
 never writes it to logs or SQLite backups. Sessions live only in memory for a
 fixed 24 hours. Logout invalidates the current session; restart invalidates all.
-There are at most 64 sessions and ten login attempts per five minutes across the
-instance, with one password check at a time. Existing sessions still work when
-the login limit has been reached.
+There are at most 64 sessions and ten login attempts per client address and five
+minutes (IPv6 per /56 prefix), with one password check at a time. A client that
+reaches the limit does not lock out other clients, and existing sessions still
+work. A successful login resets the client's count.
 
 The unauthenticated healthcheck uses `/api/health` and returns no user data.
 Docker stops the app with `SIGTERM`; Node closes HTTP and SQLite. Outside Docker,
@@ -135,8 +136,18 @@ Set `IM_OVERDUE_ORIGIN=https://time.example.net` and recreate the container.
 The original Host, including any non-standard external port, must reach the app;
 the browser's Origin must also remain unchanged. `X-Forwarded-Host` and
 `X-Forwarded-Proto` are not trusted. A configured HTTPS origin makes the session
-cookie `Secure`; direct HTTP is then not an alternative login route. No extra
-trust-proxy setting is needed.
+cookie `Secure`; direct HTTP is then not an alternative login route.
+
+Behind a proxy, every login arrives from the proxy's address, so all browsers
+share one login limit. To limit each browser separately, set
+`IM_OVERDUE_TRUSTED_PROXIES` to the proxy's address or range, for example
+`172.16.0.0/12` for a proxy container on a Docker bridge network, and let the
+proxy set `X-Forwarded-For` (Nginx: `proxy_set_header X-Forwarded-For
+$proxy_add_x_forwarded_for;`). The value is a comma-separated list of IP
+addresses or CIDR ranges. The app reads `X-Forwarded-For` only for the login
+limit and only from these peers; Host, Origin and protocol checks are unchanged.
+Do not list ranges that untrusted clients can connect from directly, because
+they could then choose their own address.
 
 ## Unraid
 

@@ -1,8 +1,11 @@
+import { parseTrustedProxies } from './client-address.js';
+
 export interface RuntimeConfig {
   host: '127.0.0.1' | '0.0.0.0';
   port: number;
   origin?: string;
   password?: string;
+  trustedProxies?: string[];
   databasePath: string;
 }
 
@@ -30,5 +33,6 @@ export function readConfig(env: NodeJS.ProcessEnv): RuntimeConfig {
   if (password !== undefined && !validPassword(password)) throw new Error('IM_OVERDUE_PASSWORD muss 12 bis 256 Zeichen und hoechstens 1024 UTF-8-Bytes enthalten.');
   if ((host === '0.0.0.0' || password !== undefined || origin !== undefined) && (!origin || password === undefined))
     throw new Error('Netzwerk- und Passwortbetrieb benoetigen IM_OVERDUE_ORIGIN und IM_OVERDUE_PASSWORD.');
-  return { host, port, origin, password, databasePath: env.IM_OVERDUE_DB ?? 'data/im-overdue.sqlite' };
+  const trustedProxies = parseTrustedProxies(env.IM_OVERDUE_TRUSTED_PROXIES);
+  return { host, port, origin, password, trustedProxies, databasePath: env.IM_OVERDUE_DB ?? 'data/im-overdue.sqlite' };
 }

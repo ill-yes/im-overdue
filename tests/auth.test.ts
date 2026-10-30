@@ -9,10 +9,10 @@ const password = 'correct horse battery staple';
 const origin = 'https://overdue.example:444';
 const running: { server: Server; db: ReturnType<typeof openDatabase> }[] = [];
 
-async function start(options: { origin?: string; now?: () => number; noAuth?: boolean } = {}) {
+async function start(options: { origin?: string; now?: () => number; noAuth?: boolean; trustedProxies?: string[] } = {}) {
   const db = openDatabase(':memory:');
   const canonical = options.origin ?? origin;
-  const auth = await createAuthentication(options.noAuth ? undefined : password, options.noAuth ? undefined : canonical, options.now);
+  const auth = await createAuthentication(options.noAuth ? undefined : password, options.noAuth ? undefined : canonical, { now: options.now, trustedProxies: options.trustedProxies });
   const server = createApp(db, { origin: canonical, auth }).listen(0, '127.0.0.1');
   running.push({ server, db });
   await new Promise<void>(resolve => server.once('listening', resolve));
@@ -30,8 +30,8 @@ async function start(options: { origin?: string; now?: () => number; noAuth?: bo
     req.on('error', reject);
     req.end(payload);
   });
-  const login = async (value = password) => {
-    const res = await request('/api/auth/login', 'POST', { password: value });
+  const login = async (value = password, extra: Record<string, string> = {}) => {
+    const res = await request('/api/auth/login', 'POST', { password: value }, extra);
     const cookie = (res.headers['set-cookie'] as string[] | undefined)?.[0]?.split(';')[0];
     return { ...res, cookie };
   };
@@ -109,17 +109,50 @@ describe('password API', () => {
     expect(health.headers['cache-control']).toBe('no-store');
   });
 
-  it('limits attempts process-wide without affecting sessions and accepts retries after five minutes', async () => {
+  it('limits attempts per client without affecting sessions and accepts retries after five minutes', async () => {
     let now = 100_000;
     const app = await start({ now: () => now });
     const { cookie } = await app.login();
-    for (let i = 0; i < 9; i++) expect((await app.login('wrong password value')).status).toBe(401);
+    for (let i = 0; i < 10; i++) expect((await app.login('wrong password value')).status).toBe(401);
     const limited = await app.login();
     expect(limited.status).toBe(429);
     expect(limited.json()).toEqual({ code: 'LOGIN_LIMITED', message: de('error.auth.limited'), messageKey: 'error.auth.limited' });
     expect(limited.headers['retry-after']).toBe('300');
     expect((await app.request('/api/state', 'GET', undefined, { Cookie: cookie! })).status).toBe(200);
     now += 5 * 60 * 1000;
+    expect((await app.login()).status).toBe(200);
+  });
+
+  it('does not let one client lock out another client behind a trusted proxy', async () => {
+    let now = 100_000;
+    const app = await start({ now: () => now, trustedProxies: ['127.0.0.1'] });
+    const attacker = { 'X-Forwarded-For': '203.0.113.7' };
+    const owner = { 'X-Forwarded-For': '198.51.100.20' };
+    for (let i = 0; i < 10; i++) expect((await app.login('wrong password value', attacker)).status).toBe(401);
+    expect((await app.login(password, attacker)).status).toBe(429);
+    expect((await app.login(password, owner)).status).toBe(200);
+    for (let i = 0; i < 10; i++) expect((await app.login('wrong password value', { 'X-Forwarded-For': `2001:db8:1:${i}::1` })).status).toBe(401);
+    expect((await app.login(password, { 'X-Forwarded-For': '2001:db8:1:ff::2' })).status).toBe(429);
+    expect((await app.login(password, { 'X-Forwarded-For': '2001:db8:2::1' })).status).toBe(200);
+    now += 5 * 60 * 1000;
+    expect((await app.login(password, attacker)).status).toBe(200);
+  });
+
+  it('ignores forwarded addresses from untrusted peers and spoofed entries before the trusted proxy', async () => {
+    const direct = await start();
+    for (let i = 0; i < 10; i++) expect((await direct.login('wrong password value', { 'X-Forwarded-For': `198.51.100.${i}` })).status).toBe(401);
+    expect((await direct.login(password, { 'X-Forwarded-For': '198.51.100.200' })).status).toBe(429);
+    const proxied = await start({ trustedProxies: ['127.0.0.0/8'] });
+    for (let i = 0; i < 10; i++) expect((await proxied.login('wrong password value', { 'X-Forwarded-For': `10.9.9.${i}, 203.0.113.7` })).status).toBe(401);
+    expect((await proxied.login(password, { 'X-Forwarded-For': '10.9.9.200, 203.0.113.7' })).status).toBe(429);
+    expect((await proxied.login(password, { 'X-Forwarded-For': '203.0.113.8' })).status).toBe(200);
+  });
+
+  it('resets the attempt count of a client after a successful login', async () => {
+    const app = await start();
+    for (let i = 0; i < 9; i++) expect((await app.login('wrong password value')).status).toBe(401);
+    expect((await app.login()).status).toBe(200);
+    for (let i = 0; i < 9; i++) expect((await app.login('wrong password value')).status).toBe(401);
     expect((await app.login()).status).toBe(200);
   });
 

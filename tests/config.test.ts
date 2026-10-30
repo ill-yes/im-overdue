@@ -14,6 +14,11 @@ describe('startup configuration', () => {
     for (const config of [{ HOST: '0.0.0.0' }, { IM_OVERDUE_PASSWORD: password }, { IM_OVERDUE_ORIGIN: 'https://overdue.example' }, { HOST: 'localhost' }, { HOST: '192.168.1.2' }, { PORT: '' }, { PORT: '1e3' }, { PORT: '65536' }])
       expect(() => readConfig(config)).toThrow();
   });
+  it('reads optional trusted reverse proxies for login throttling', () => {
+    expect(readConfig({ IM_OVERDUE_TRUSTED_PROXIES: '172.16.0.0/12,::1' }).trustedProxies).toEqual(['172.16.0.0/12', '::1']);
+    expect(readConfig({ IM_OVERDUE_TRUSTED_PROXIES: '' }).trustedProxies).toBeUndefined();
+    expect(() => readConfig({ IM_OVERDUE_TRUSTED_PROXIES: 'true' })).toThrow();
+  });
   it('rejects noncanonical origins without exposing the supplied value', () => {
     for (const origin of ['https://EXAMPLE.com', 'https://example.com/', 'https://example.com:443', 'https://example.com/path', 'https://u:secret@example.com', 'https://example.com?x=1', 'ftp://example.com', 'null', 'https://one.example https://two.example']) {
       expect(() => canonicalOrigin(origin)).toThrow();
