@@ -14,7 +14,7 @@ import { bad, body, errorHandler, HttpError, route } from './http.js';
 import { requestSecurity } from './loopback-security.js';
 import type { Authentication } from './auth.js';
 import { allowanceDays, bool, monday, parseImportInput, reusableForBlock, validBlock, validDate, validReusable, validVacationChanges, validZone } from './validation.js';
-import { checkReopen, insertTemplateIfNew, mutate, noOverlap, pushRecent, reopen, revision, segments, touchWeeks, weekKeys } from './state-changes.js';
+import { checkReopen, insertTemplateIfNew, mutate, noOverlap, pushRecent, reopen, revision, segments, touchWeeks, UNCHANGED, weekKeys } from './state-changes.js';
 import { NOTE_MAX_LENGTH, noteText } from '../shared/notes.js';
 import { reusableKey } from '../shared/reuse.js';
 import { applyBlockUndo, clearUndo, readUndo, saveBlockUndo, saveVacationUndo } from './undo.js';
@@ -87,63 +87,43 @@ export function createApp(db: DatabaseSync, options: { origin?: string; auth?: A
     const year = Number(req.params.year);
     const entitlementDays = allowanceDays(b.entitlementDays);
     const carryoverDays = allowanceDays(b.carryoverDays);
-    const state = transaction(db, () => {
-      revision(db, b);
-      const before = readState(db);
+    const state = mutate(db, b, before => {
       const existing = before.vacationAllowances.find(allowance => allowance.year === year);
-      if (existing?.entitlementDays === entitlementDays && existing.carryoverDays === carryoverDays) return before;
+      if (existing?.entitlementDays === entitlementDays && existing.carryoverDays === carryoverDays) return UNCHANGED;
       db.prepare('INSERT INTO vacation_allowances(year,entitlement_days,carryover_days) VALUES (?,?,?) ON CONFLICT(year) DO UPDATE SET entitlement_days=excluded.entitlement_days,carryover_days=excluded.carryover_days')
         .run(year, entitlementDays, carryoverDays);
-      bumpRevision(db);
-      clearUndo(db);
-      return readState(db);
     });
     res.json(state);
   }));
   app.post('/api/templates', route((req, res) => {
     const b = body(req);
     const input = validReusable(b);
-    const state = transaction(db, () => {
-      revision(db, b);
-      const before = readState(db);
-      if (before.templates.some(template => reusableKey(template) === reusableKey(input))) return before;
+    const state = mutate(db, b, before => {
+      if (before.templates.some(template => reusableKey(template) === reusableKey(input))) return UNCHANGED;
       db.prepare('INSERT INTO templates(id,title,note,duration_minutes) VALUES (?,?,?,?)')
         .run(randomUUID(), input.title, input.note, input.durationMinutes);
-      bumpRevision(db);
-      clearUndo(db);
-      return readState(db);
     });
     res.json(state);
   }));
   app.put('/api/templates/:id', route((req, res) => {
     const b = body(req);
     const input = validReusable(b);
-    const state = transaction(db, () => {
-      revision(db, b);
-      const before = readState(db);
+    const state = mutate(db, b, before => {
       const existing = before.templates.find(template => template.id === req.params.id);
       if (!existing) throw new HttpError(404, 'Vorlage nicht gefunden.', 'error.template.notFound');
-      if (reusableKey(existing) === reusableKey(input)) return before;
+      if (reusableKey(existing) === reusableKey(input)) return UNCHANGED;
       if (before.templates.some(template => template.id !== existing.id && reusableKey(template) === reusableKey(input)))
         throw new HttpError(409, 'Vorlage existiert bereits.', 'error.template.duplicate', 'TEMPLATE_DUPLICATE');
       db.prepare('UPDATE templates SET title=?,note=?,duration_minutes=? WHERE id=?')
         .run(input.title, input.note, input.durationMinutes, existing.id);
-      bumpRevision(db);
-      clearUndo(db);
-      return readState(db);
     });
     res.json(state);
   }));
   app.delete('/api/templates/:id', route((req, res) => {
     const b = body(req);
-    const state = transaction(db, () => {
-      revision(db, b);
-      const before = readState(db);
+    const state = mutate(db, b, before => {
       if (!before.templates.some(template => template.id === req.params.id)) throw new HttpError(404, 'Vorlage nicht gefunden.', 'error.template.notFound');
       db.prepare('DELETE FROM templates WHERE id=?').run(req.params.id as string);
-      bumpRevision(db);
-      clearUndo(db);
-      return readState(db);
     });
     res.json(state);
   }));
@@ -154,19 +134,14 @@ export function createApp(db: DatabaseSync, options: { origin?: string; auth?: A
     const date = scope === 'week' ? monday(req.params.date) : validDate(req.params.date);
     if (typeof b.text !== 'string' || b.text.length > NOTE_MAX_LENGTH) throw bad(`Notiz muss Text mit maximal ${NOTE_MAX_LENGTH} Zeichen sein.`, 'error.validation.note', { max: NOTE_MAX_LENGTH });
     const text = b.text;
-    const state = transaction(db, () => {
-      revision(db, b);
-      const before = readState(db);
+    const state = mutate(db, b, before => {
       const previous = noteText(before.notes, scope, date);
-      if ((!text.trim() && !previous) || (text.trim() && previous === text)) return before;
+      if ((!text.trim() && !previous) || (text.trim() && previous === text)) return UNCHANGED;
       if (text.trim()) {
         db.prepare('INSERT INTO notes(scope,date,text) VALUES (?,?,?) ON CONFLICT(scope,date) DO UPDATE SET text=excluded.text').run(scope, date, text);
       } else {
         db.prepare('DELETE FROM notes WHERE scope=? AND date=?').run(scope, date);
       }
-      bumpRevision(db);
-      clearUndo(db);
-      return readState(db);
     });
     res.json(state);
   }));

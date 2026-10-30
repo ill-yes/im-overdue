@@ -7,7 +7,7 @@ import { GERMAN_STATES, type AbsenceChange, type AccountEntryInput, type AppStat
 import { bumpRevision, readState, transaction, writeAbsence } from './db.js';
 import { bad, body, HttpError, route } from './http.js';
 import { bool, validDate } from './validation.js';
-import { checkReopen, reopen, revision } from './state-changes.js';
+import { checkReopen, mutate, reopen, revision, UNCHANGED } from './state-changes.js';
 import { clearUndo, saveAbsenceUndo } from './undo.js';
 
 function minutes(value: unknown): number {
@@ -40,7 +40,6 @@ function absenceInput(value: unknown): AbsenceChange[] {
   return days;
 }
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
-function finish(db: DatabaseSync): AppState { bumpRevision(db); clearUndo(db); return readState(db); }
 
 /** Only effective numerical changes invalidate a closed week's accounting. */
 function holidayWeeks(before: AppState, after: AppState): string[] {
@@ -54,35 +53,27 @@ function holidayWeeks(before: AppState, after: AppState): string[] {
 export function registerAccountingRoutes(app: Express, db: DatabaseSync): void {
   app.put('/api/account/opening', route((req, res) => {
     const b = body(req), input = { date: validDate(b.date), minutes: minutes(b.minutes) };
-    res.json(transaction(db, () => {
-      revision(db, b);
-      const before = readState(db);
-      if (same(before.accountOpening, input)) return before;
+    res.json(mutate(db, b, before => {
+      if (same(before.accountOpening, input)) return UNCHANGED;
       db.prepare('INSERT INTO account_opening(singleton,date,minutes) VALUES (1,?,?) ON CONFLICT(singleton) DO UPDATE SET date=excluded.date,minutes=excluded.minutes').run(input.date, input.minutes);
-      return finish(db);
     }));
   }));
   for (const method of ['post', 'put'] as const) app[method](method === 'post' ? '/api/account/entries' : '/api/account/entries/:id', route((req, res) => {
     const b = body(req), input = entryInput(b);
-    res.json(transaction(db, () => {
-      revision(db, b);
-      const before = readState(db);
+    res.json(mutate(db, b, before => {
       const existing = method === 'put' ? before.accountEntries?.find(item => item.id === req.params.id) : undefined;
       if (method === 'put' && !existing) throw new HttpError(404, 'Buchung nicht gefunden.', 'error.account.notFound');
-      if (existing && same(entryInput(existing as unknown as Record<string, unknown>), input)) return before;
+      if (existing && same(entryInput(existing as unknown as Record<string, unknown>), input)) return UNCHANGED;
       if (!before.accountOpening || input.date < before.accountOpening.date) throw bad('Buchung liegt vor dem Anfangssaldo.', 'error.account.opening');
       db.prepare('INSERT INTO account_entries(id,date,kind,minutes,reason) VALUES (?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET date=excluded.date,kind=excluded.kind,minutes=excluded.minutes,reason=excluded.reason')
         .run(existing?.id ?? randomUUID(), input.date, input.kind, input.minutes, input.reason);
-      return finish(db);
     }));
   }));
   app.delete('/api/account/entries/:id', route((req, res) => {
     const b = body(req);
-    res.json(transaction(db, () => {
-      revision(db, b);
-      if (!readState(db).accountEntries?.some(item => item.id === req.params.id)) throw new HttpError(404, 'Buchung nicht gefunden.', 'error.account.notFound');
+    res.json(mutate(db, b, before => {
+      if (!before.accountEntries?.some(item => item.id === req.params.id)) throw new HttpError(404, 'Buchung nicht gefunden.', 'error.account.notFound');
       db.prepare('DELETE FROM account_entries WHERE id=?').run(req.params.id as string);
-      return finish(db);
     }));
   }));
   app.put('/api/absences', route((req, res) => {
@@ -108,7 +99,8 @@ export function registerAccountingRoutes(app: Express, db: DatabaseSync): void {
         else db.prepare('DELETE FROM vacations WHERE date=?').run(day.date);
         writeAbsence(db, day);
       }
-      finish(db);
+      bumpRevision(db);
+      clearUndo(db);
       saveAbsenceUndo(db, before, readState(db));
       return readState(db);
     }));
@@ -117,42 +109,35 @@ export function registerAccountingRoutes(app: Express, db: DatabaseSync): void {
     const b = body(req), effectiveFrom = validDate(b.effectiveFrom), confirmed = bool(b.confirmReopen, 'confirmReopen');
     if (b.region !== null && !GERMAN_STATES.includes(b.region as never)) throw bad('Ungültiges Bundesland.', 'error.holiday.region');
     if (b.ruleVersion !== undefined && b.ruleVersion !== 1) throw bad('Ungültige Feiertagsregel.', 'error.holiday.region');
-    res.json(transaction(db, () => {
-      revision(db, b);
-      const before = readState(db), existing = before.holidayProfiles?.find(profile => profile.effectiveFrom === effectiveFrom);
-      if (existing && existing.region === b.region) return before;
+    res.json(mutate(db, b, before => {
+      const existing = before.holidayProfiles?.find(profile => profile.effectiveFrom === effectiveFrom);
+      if (existing && existing.region === b.region) return UNCHANGED;
       const input: HolidayProfile = { id: existing?.id ?? randomUUID(), effectiveFrom, region: b.region as HolidayProfile['region'], ruleVersion: 1 };
       const after = { ...before, holidayProfiles: [...(before.holidayProfiles ?? []).filter(profile => profile.id !== input.id), input].sort((a, z) => a.effectiveFrom.localeCompare(z.effectiveFrom)) };
       reopen(db, checkReopen(before, holidayWeeks(before, after), confirmed));
       db.prepare('INSERT INTO holiday_profiles(id,effective_from,region,rule_version) VALUES (?,?,?,1) ON CONFLICT(effective_from) DO UPDATE SET region=excluded.region,rule_version=1').run(input.id, effectiveFrom, input.region);
-      return finish(db);
     }));
   }));
   app.delete('/api/holiday-profiles/:id', route((req, res) => {
     const b = body(req), confirmed = bool(b.confirmReopen, 'confirmReopen');
-    res.json(transaction(db, () => {
-      revision(db, b);
-      const before = readState(db);
+    res.json(mutate(db, b, before => {
       if (!before.holidayProfiles?.some(profile => profile.id === req.params.id)) throw new HttpError(404, 'Feiertagsprofil nicht gefunden.', 'error.holiday.notFound');
       const after = { ...before, holidayProfiles: before.holidayProfiles.filter(profile => profile.id !== req.params.id) };
       reopen(db, checkReopen(before, holidayWeeks(before, after), confirmed));
       db.prepare('DELETE FROM holiday_profiles WHERE id=?').run(req.params.id as string);
-      return finish(db);
     }));
   }));
   for (const method of ['put', 'delete'] as const) app[method]('/api/holiday-overrides/:date', route((req, res) => {
     const b = body(req), date = validDate(req.params.date), confirmed = bool(b.confirmReopen, 'confirmReopen');
     if (method === 'put' && b.name !== null && (typeof b.name !== 'string' || !b.name.trim() || b.name.trim().length > 160)) throw bad('Ungültiger Feiertagsname.', 'error.holiday.name');
     const name = typeof b.name === 'string' ? b.name.trim() : null;
-    res.json(transaction(db, () => {
-      revision(db, b);
-      const before = readState(db), existing = before.holidayOverrides?.find(item => item.date === date);
-      if (method === 'delete' && !existing || method === 'put' && existing?.name === name) return before;
+    res.json(mutate(db, b, before => {
+      const existing = before.holidayOverrides?.find(item => item.date === date);
+      if (method === 'delete' && !existing || method === 'put' && existing?.name === name) return UNCHANGED;
       const after = { ...before, holidayOverrides: [...(before.holidayOverrides ?? []).filter(item => item.date !== date), ...(method === 'put' ? [{ date, name }] : [])] };
       reopen(db, checkReopen(before, holidayWeeks(before, after), confirmed));
       if (method === 'delete') db.prepare('DELETE FROM holiday_overrides WHERE date=?').run(date);
       else db.prepare('INSERT INTO holiday_overrides(date,name) VALUES (?,?) ON CONFLICT(date) DO UPDATE SET name=excluded.name').run(date, name);
-      return finish(db);
     }));
   }));
 }

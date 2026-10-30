@@ -4,9 +4,9 @@ import { randomUUID } from 'node:crypto';
 import { SOURCES, type Activity, type DataPage, type ImportCounts, type ImportInput, type ImportPackage, type Source } from '../shared/types.js';
 import { SOURCE_LABELS } from '../shared/data-sources.js';
 import { Temporal } from '../shared/time.js';
-import { ACTIVITY_TIME_ORDER, bumpRevision, readState, transaction } from './db.js';
+import { ACTIVITY_TIME_ORDER, bumpRevision, readState } from './db.js';
 import { bad, body, HttpError, route } from './http.js';
-import { revision } from './state-changes.js';
+import { mutate, UNCHANGED } from './state-changes.js';
 import { clearUndo } from './undo.js';
 import { importDuplicates, previewImport } from './import.js';
 
@@ -53,34 +53,25 @@ export function registerDataSourceRoutes(app: Express, db: DatabaseSync): void {
     const b = body(req);
     const name = sourceName(b.name);
     if (!SOURCES.includes(b.type as Source)) throw bad('Unbekannter Quellentyp.', 'error.dataSource.type');
-    res.json(transaction(db, () => {
-      revision(db, b);
+    res.json(mutate(db, b, () => {
       db.prepare('INSERT INTO data_sources(id,type,name) VALUES (?,?,?)').run(randomUUID(), b.type as Source, name);
-      bumpRevision(db); clearUndo(db);
-      return readState(db);
     }));
   }));
   app.put('/api/data-sources/:id', route((req, res) => {
     const b = body(req);
     const name = sourceName(b.name);
-    res.json(transaction(db, () => {
-      revision(db, b);
+    res.json(mutate(db, b, () => {
       const source = requireSource(db, req.params.id as string);
       if (b.type !== undefined && b.type !== source.type) throw bad('Der Quellentyp ist unveraenderlich.', 'error.dataSource.typeImmutable');
-      if (source.name === name) return readState(db);
+      if (source.name === name) return UNCHANGED;
       db.prepare('UPDATE data_sources SET name=? WHERE id=?').run(name, source.id);
-      bumpRevision(db); clearUndo(db);
-      return readState(db);
     }));
   }));
   app.delete('/api/data-sources/:id', route((req, res) => {
     const b = body(req);
-    res.json(transaction(db, () => {
-      revision(db, b);
+    res.json(mutate(db, b, () => {
       const source = requireSource(db, req.params.id as string);
       db.prepare('DELETE FROM data_sources WHERE id=?').run(source.id);
-      bumpRevision(db); clearUndo(db);
-      return readState(db);
     }));
   }));
   app.get('/api/data-sources/:id/activities', route((req, res) => {

@@ -66,11 +66,14 @@ export function segments(input: BlockInput, zone: string): BlockInput[] {
   catch { throw bad('Arbeitsblock darf hoechstens sieben lokale Kalendertage lang sein.', 'error.block.range'); }
 }
 
-export function mutate(db: DatabaseSync, b: Record<string, unknown>, action: (state: AppState) => void, undoLabel?: string): AppState {
+/** Returned by a mutate action that changes nothing: revision and Undo stay untouched. */
+export const UNCHANGED = Symbol('unchanged');
+
+export function mutate(db: DatabaseSync, b: Record<string, unknown>, action: (state: AppState) => void | typeof UNCHANGED, undoLabel?: string): AppState {
   return transaction(db, () => {
     revision(db, b);
     const before = readState(db);
-    action(before);
+    if (action(before) === UNCHANGED) return before;
     bumpRevision(db);
     clearUndo(db);
     if (undoLabel) saveBlockUndo(db, before, readState(db), undoLabel);
