@@ -11,6 +11,7 @@ export const serverMessages = {
   "error.absence.value": { en: "Invalid absence combination or compensation amount.", de: "Ungültige Abwesenheitskombination oder ungültiger Freizeitausgleich." },
   "error.absence.target": { en: "New absences require a positive daily target.", de: "Neue Abwesenheiten benötigen ein positives Tagessoll." },
   "error.holiday.region": { en: "Choose a German state or disable regional holidays.", de: "Ein deutsches Bundesland wählen oder regionale Feiertage deaktivieren." },
+  "error.holiday.ruleVersion": { en: "Unsupported holiday rule version.", de: "Nicht unterstützte Version der Feiertagsregeln." },
   "error.holiday.name": { en: "The holiday name must contain 1 to 160 characters, or be null to exclude it.", de: "Der Feiertagsname muss 1 bis 160 Zeichen enthalten, oder null zum Ausschließen sein." },
   "error.holiday.notFound": { en: "Holiday profile not found.", de: "Feiertagsprofil nicht gefunden." },
 

@@ -108,7 +108,7 @@ export function registerAccountingRoutes(app: Express, db: DatabaseSync): void {
   app.post('/api/holiday-profiles', route((req, res) => {
     const b = body(req), effectiveFrom = validDate(b.effectiveFrom), confirmed = bool(b.confirmReopen, 'confirmReopen');
     if (b.region !== null && !GERMAN_STATES.includes(b.region as never)) throw bad('error.holiday.region');
-    if (b.ruleVersion !== undefined && b.ruleVersion !== 1) throw bad('error.holiday.region');
+    if (b.ruleVersion !== undefined && b.ruleVersion !== 1) throw bad('error.holiday.ruleVersion');
     res.json(mutate(db, b, before => {
       const existing = before.holidayProfiles?.find(profile => profile.effectiveFrom === effectiveFrom);
       if (existing && existing.region === b.region) return UNCHANGED;

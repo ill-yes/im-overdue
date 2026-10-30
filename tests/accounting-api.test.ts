@@ -143,6 +143,8 @@ describe('holiday configuration', () => {
     }
     const invalid = await (await save('/api/holiday-profiles', { effectiveFrom: '2026-01-01', region: 'XX' }, 'POST')).json();
     expect(invalid.messageKey).toBe('error.holiday.region'); expect(serverMessages['error.holiday.region'].en).toBeTruthy(); expect(serverMessages['error.holiday.region'].de).toBeTruthy();
+    const version = await (await save('/api/holiday-profiles', { effectiveFrom: '2026-01-01', region: 'HE', ruleVersion: 2 }, 'POST')).json();
+    expect(version.messageKey).toBe('error.holiday.ruleVersion'); expect(serverMessages['error.holiday.ruleVersion'].en).toBeTruthy(); expect(serverMessages['error.holiday.ruleVersion'].de).toBeTruthy();
     expect((await state()).revision).toBe(0);
   });
   it('backs up ledger, absence, profile, overrides and v4 undo together', async () => {
