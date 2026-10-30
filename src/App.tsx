@@ -98,10 +98,11 @@ export default function App() {
     setSources(current => ids.filter(id => !known || !known.has(id) || current.includes(id)));
     knownSources.current = new Set(ids);
   }, [sourceIds]);
+  const editorOpen = Boolean(dialog || blockEditor || noteEditor || reuseDialog || vacationEditor || weekCloseEditor);
   const error = displayText(failure?.message);
   const { focused, mainRef, focusToggle, enterFocus, leaveFocus, invalidateFocusOrigin } = useCalendarFocus({
     week,
-    dialogOpen: Boolean(dialog || blockEditor || noteEditor || reuseDialog || quickCreate || vacationEditor || weekCloseEditor),
+    dialogOpen: editorOpen || Boolean(quickCreate),
     gestureInFlight,
     reviewOpen: Boolean(reviewDate),
     messageVisible: Boolean(message),
@@ -113,7 +114,7 @@ export default function App() {
   const internalNavigation = useRef(false);
   const canLeavePage = () => !gestureInFlight.current && (leaveGuards.current[activePage.current]?.() ?? true);
   const { page, navigatePage } = useWorkspaceNavigation(
-    () => (internalNavigation.current || !(dialog || blockEditor || noteEditor || vacationEditor || reuseDialog || weekCloseEditor)) && canLeavePage(),
+    () => (internalNavigation.current || !editorOpen) && canLeavePage(),
     () => { replaceQuickCreate(null); leaveFocus(); },
   );
   activePage.current = page;
@@ -177,7 +178,7 @@ export default function App() {
     });
   };
   useEffect(() => {
-    if (view !== 'week' || dialog || blockEditor || noteEditor || reuseDialog || vacationEditor || weekCloseEditor) replaceQuickCreate(null);
+    if (view !== 'week' || editorOpen) replaceQuickCreate(null);
   }, [view, dialog, blockEditor, noteEditor, reuseDialog, vacationEditor, weekCloseEditor, replaceQuickCreate]);
 
   const closed = state?.weeks.some((w) => w.weekStart === week && w.status === 'closed') ?? false;
@@ -188,7 +189,7 @@ export default function App() {
     (currentWeek === week ? currentDay : week);
 
   const undoLastChange = async () => {
-    if (page !== 'calendar' || !state?.undo || dialog || blockEditor || noteEditor || reuseDialog || vacationEditor || weekCloseEditor || quickCreateRef.current || gestureInFlight.current) return;
+    if (page !== 'calendar' || !state?.undo || editorOpen || quickCreateRef.current || gestureInFlight.current) return;
     const token = state.undo.token;
     await applyMutation(
       (revision) => api.undoBlock(token, revision),
@@ -210,8 +211,7 @@ export default function App() {
   };
   useUndoShortcut(
     () => page === 'calendar' && Boolean(state?.undo) && !busy && !isRequestInFlight() &&
-      !dialog && !blockEditor && !noteEditor && !vacationEditor && !weekCloseEditor &&
-      !reuseDialog && !quickCreateRef.current && !gestureInFlight.current,
+      !editorOpen && !quickCreateRef.current && !gestureInFlight.current,
     undoLastChange,
   );
   const onGestureChange = useCallback((active: boolean) => {
