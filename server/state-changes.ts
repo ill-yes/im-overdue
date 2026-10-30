@@ -1,6 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { randomUUID } from 'node:crypto';
-import { bumpRevision, readState, transaction } from './db.js';
+import { bumpRevision, readRevision, readState, transaction } from './db.js';
 import { clearUndo, saveBlockUndo } from './undo.js';
 import { bad, HttpError } from './http.js';
 import { reusableKey } from '../shared/reuse.js';
@@ -9,7 +9,7 @@ import type { AppState, BlockInput, RecentEntry, ReusableInput, WorkBlock } from
 
 export function revision(db: DatabaseSync, b: Record<string, unknown>): void {
   if (!Number.isSafeInteger(b.expectedRevision) || (b.expectedRevision as number) < 0) throw bad('expectedRevision fehlt.', 'error.revision.required');
-  if (readState(db).revision !== b.expectedRevision) throw new HttpError(409, 'Ansicht ist veraltet. Bitte neu laden.', 'error.revision.conflict', 'REVISION_CONFLICT');
+  if (readRevision(db) !== b.expectedRevision) throw new HttpError(409, 'Ansicht ist veraltet. Bitte neu laden.', 'error.revision.conflict', 'REVISION_CONFLICT');
 }
 
 export function insertTemplateIfNew(db: DatabaseSync, state: AppState, input: ReusableInput): void {

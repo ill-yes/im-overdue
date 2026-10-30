@@ -157,6 +157,11 @@ export function transaction<T>(db: DatabaseSync, run: () => T): T {
   }
 }
 
+export function readRevision(db: DatabaseSync): number {
+  const row = db.prepare("SELECT value FROM meta WHERE key='revision'").get() as { value: string } | undefined;
+  return Number(row?.value);
+}
+
 export function bumpRevision(db: DatabaseSync): void {
   db.prepare("UPDATE meta SET value=CAST(value AS INTEGER)+1 WHERE key='revision'").run();
 }
