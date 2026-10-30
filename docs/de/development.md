@@ -17,7 +17,9 @@ I'm Overdue. Die Architekturhinweise folgen nach den ausführbaren Schritten.
 
 ## Lokal ausführen
 
-Nutze Node.js 24 oder neuer und npm. Der Container verwendet die Node-24-Reihe.
+Nutze Node.js 24 oder neuer und npm. Der Container verwendet die Node-24-Reihe;
+`.nvmrc` wählt sie für nvm und kompatible Versionsmanager, und npm verweigert die
+Installation mit älteren Versionen.
 
 ```sh
 npm ci

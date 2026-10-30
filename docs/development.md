@@ -17,7 +17,9 @@ and maintenance notes follow the runnable setup steps.
 
 ## Run locally
 
-Use Node.js 24 or newer and npm. The container pins the Node 24 release line.
+Use Node.js 24 or newer and npm. The container pins the Node 24 release line;
+`.nvmrc` selects it for nvm and compatible version managers, and npm refuses to
+install on older versions.
 
 ```sh
 npm ci
