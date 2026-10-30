@@ -2,10 +2,11 @@ import { useMessages, errorText, type TextValue } from '../i18n';
 import { workflows } from '../locales/workflows';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { AppState, VacationAllowance } from '../../shared/types.js';
-import { targetForDay } from '../../shared/calculations.js';
+import { dayAccounting } from '../../shared/calculations.js';
 import { vacationAccount } from '../../shared/vacations.js';
 import { Temporal, today } from '../../shared/time.js';
 import { duration, longDate } from '../format';
+import { absenceSummaryMessages } from '../locales/absence-summary';
 import './vacation-account.css';
 
 const allowanceKey = (allowance: VacationAllowance | null | undefined) => allowance ? `${allowance.entitlementDays}/${allowance.carryoverDays}` : '';
@@ -59,6 +60,7 @@ function AllowanceForm({ state, year, busy, requestError, onSave, onPending, onD
   onOpenVacation: (date: string) => void;
 }) {
   const { t, m, text: renderText, locale } = useMessages(workflows);
+  const { t: absenceText } = useMessages(absenceSummaryMessages);
   const daysLabel = (days: number) => t(Math.abs(days) === 1 ? 'daysOne' : 'daysMany', { count: new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(days) });
   const account = vacationAccount(state, year);
   const [baseline, setBaseline] = useState(() => allowanceKey(account.allowance));
@@ -123,7 +125,11 @@ function AllowanceForm({ state, year, busy, requestError, onSave, onPending, onD
     </form>
     <div className="vacation-account-list">
       <h3>{t('vacationDaysYear', { year })}</h3>
-      {vacations.length === 0 ? <p className="muted small">{t('noVacationYear')}</p> : <ul>{vacations.map(day => <li key={day.date}><div><strong>{longDate(day.date)}</strong><span>{day.fraction === 1 ? t('oneDay') : t('halfDayShort')} · {t('creditDuration', { duration: duration(day.fraction * targetForDay(day.date, state.profiles)) })}</span></div><button type="button" className="button secondary" disabled={pending} onClick={() => onOpenVacation(day.date)} aria-label={t('editVacationDate', { date: longDate(day.date) })}>{t('edit')}</button></li>)}</ul>}
+      {vacations.length === 0 ? <p className="muted small">{t('noVacationYear')}</p> : <ul>{vacations.map(day => {
+        // Public holidays suspend leave credit; show the same amount the account counts.
+        const accounting = dayAccounting(state, day.date);
+        return <li key={day.date}><div><strong>{longDate(day.date)}</strong><span>{day.fraction === 1 ? t('oneDay') : t('halfDayShort')} · {t('creditDuration', { duration: duration(accounting.vacationMinutes) })}{accounting.holiday ? ` · ${absenceText('suspended')}` : ''}</span></div><button type="button" className="button secondary" disabled={pending} onClick={() => onOpenVacation(day.date)} aria-label={t('editVacationDate', { date: longDate(day.date) })}>{t('edit')}</button></li>;
+      })}</ul>}
     </div>
   </>;
 }

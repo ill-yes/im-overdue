@@ -396,3 +396,19 @@ test('vacation and DST notes keep all seven calendar headers and work axes align
     }
   }
 });
+
+test('the yearly leave list shows no credit for leave on a public holiday, matching the account totals', async ({ page }) => {
+  await page.goto('/');
+  await mutate(page, '/api/holiday-profiles', 'POST', { effectiveFrom: '2026-01-01', region: 'HE' });
+  await mutate(page, '/api/vacations', 'PUT', { days: [{ date: '2026-12-24', fraction: 1 }, { date: '2026-12-25', fraction: 1 }] });
+  await page.reload();
+  await chooseWeek(page, '2026-12-21');
+  const { account } = await openAccount(page);
+  await account.getByRole('combobox', { name: 'Urlaubsjahr', exact: true }).selectOption('2026');
+  await expect(account.locator('.vacation-account-stats div').nth(1)).toContainText('1 Tag');
+  const items = account.locator('.vacation-account-list li');
+  await expect(items).toHaveCount(2);
+  await expect(items.nth(0)).toContainText('8 h Gutschrift');
+  await expect(items.nth(0)).not.toContainText('Feiertag');
+  await expect(items.nth(1)).toContainText('0 h Gutschrift · am Feiertag ausgesetzt');
+});
