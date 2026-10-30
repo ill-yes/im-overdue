@@ -1,4 +1,4 @@
-import type { AbsenceChange, AccountEntryInput, AccountOpening, Activity, AppState, BlockInput, DataPage, GermanState, ImportAnalysis, ImportInput, ImportPackage, ImportPackagePage, ImportPreview, NoteScope, ReusableInput, Source, TimesheetSnapshot, VacationAllowance, VacationChange, WeekReview } from '../shared/types.js';
+import type { AbsenceChange, AccountEntryInput, AccountOpening, Activity, AppState, BlockInput, DataPage, GermanState, ImportAnalysis, ImportInput, ImportPackage, ImportPackagePage, ImportPreview, NoteScope, ReusableInput, Source, TimesheetSnapshot, VacationAllowance, WeekReview } from '../shared/types.js';
 import { localized, type MessageParams, type Messages } from '../shared/i18n.js';
 
 const networkMessages = {
@@ -105,7 +105,6 @@ export const api = {
   undoBlock: (token: string, revision: number) => request<AppState>('/api/blocks/undo', 'POST', { token, expectedRevision: revision }),
   setWeek: (weekStart: string, status: 'open' | 'closed', revision: number, confirmCurrent = false, confirmWarnings = false, reviewKey?: string) => request<AppState>(`/api/weeks/${weekStart}`, 'POST', { status, expectedRevision: revision, confirmCurrent, confirmWarnings, reviewKey }),
   weekReview: (weekStart: string) => request<WeekReview>(`/api/weeks/${weekStart}/review`),
-  saveVacations: (days: VacationChange[], revision: number, confirmReopen = false) => request<AppState>('/api/vacations', 'PUT', { days, expectedRevision: revision, confirmReopen }),
   saveAbsences: (days: AbsenceChange[], revision: number, confirmReopen = false) => request<AppState>('/api/absences', 'PUT', { days, expectedRevision: revision, confirmReopen }),
   saveAccountOpening: (input: AccountOpening, revision: number) => request<AppState>('/api/account/opening', 'PUT', { ...input, expectedRevision: revision }),
   saveAccountEntry: (id: string | null, input: AccountEntryInput, revision: number) => request<AppState>(id ? `/api/account/entries/${encodeURIComponent(id)}` : '/api/account/entries', id ? 'PUT' : 'POST', { ...input, expectedRevision: revision }),
