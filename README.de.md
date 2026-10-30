@@ -144,7 +144,8 @@ Standardlizenz und [Beiträge](CONTRIBUTING.md) für die Beitragsbedingungen.
 
 Du hast einen Fehler gefunden, eine Idee oder möchtest mithelfen? Nutze
 [GitHub Issues](https://github.com/ill-yes/im-overdue/issues) oder schau in die
-[Beitragsbedingungen](CONTRIBUTING.md).
+[Beitragsbedingungen](CONTRIBUTING.md). Sicherheitslücken meldest du bitte
+vertraulich, wie in der [Sicherheitsrichtlinie](SECURITY.md) beschrieben.
 
 Wenn I'm Overdue deine Woche etwas leichter macht, kannst du mir einen Kaffee
 spendieren. Die Unterstützung ist ganz freiwillig. Danke, dass du dir hier

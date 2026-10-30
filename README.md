@@ -139,7 +139,8 @@ contribution terms.
 
 Found a bug, have an idea, or want to help improve the app? Head to
 [GitHub Issues](https://github.com/ill-yes/im-overdue/issues), or read the
-[contribution guide](CONTRIBUTING.md).
+[contribution guide](CONTRIBUTING.md). Please report security issues privately as
+described in the [security policy](SECURITY.md).
 
 If I'm Overdue makes your week a little easier, you can buy me a coffee.
 Support is entirely optional. Thank you for spending some of your time here.
