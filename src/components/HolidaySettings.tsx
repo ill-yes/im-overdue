@@ -24,7 +24,8 @@ export function HolidaySettings({ state, busy, onProfile, onDeleteProfile, onOve
   const [profileBase, setProfileBase] = useState(() => JSON.stringify(profile));
   const [override, setOverride] = useState({ date: initialDate, mode: 'add' as 'add' | 'exclude', name: '' });
   const [overrideBase, setOverrideBase] = useState(() => JSON.stringify(override));
-  const [revision, setRevision] = useState(state.revision);
+  // null: adopt the revision rendered with this component's own saved change.
+  const [revision, setRevision] = useState<number | null>(state.revision);
   const [profileSnapshots, setProfileSnapshots] = useState<Record<string, string>>(() => Object.fromEntries((state.holidayProfiles ?? []).map(item => [item.effectiveFrom, JSON.stringify({ effectiveFrom: item.effectiveFrom, region: item.region })])));
   const [overrideSnapshots, setOverrideSnapshots] = useState<Record<string, string>>(() => Object.fromEntries((state.holidayOverrides ?? []).map(item => [item.date, JSON.stringify({ date: item.date, name: item.name })])));
   const [pending, setPending] = useState(false);
@@ -38,6 +39,7 @@ export function HolidaySettings({ state, busy, onProfile, onDeleteProfile, onOve
   useEffect(() => { onDirtyChange?.(profileDirty || overrideDirty); }, [profileDirty, overrideDirty, onDirtyChange]);
   useEffect(() => { onPendingChange?.(pending); }, [pending, onPendingChange]);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  useEffect(() => { if (revision === null) setRevision(state.revision); }, [revision, state.revision]);
   const currentHoliday = validDate(override.date) ? holidayForDate(state, override.date) : null;
   const existingProfile = state.holidayProfiles?.find(item => item.effectiveFrom === profile.effectiveFrom);
   const profileUnchanged = !!existingProfile && existingProfile.region === profile.region;
@@ -53,7 +55,7 @@ export function HolidaySettings({ state, busy, onProfile, onDeleteProfile, onOve
     pendingRef.current = true; setPending(true); setError(''); setSaved(false);
     try {
       const ok = await action();
-      if (mounted.current && ok) { done?.(); setSaved(true); setRevision(state.revision); }
+      if (mounted.current && ok) { done?.(); setSaved(true); setRevision(null); }
       else if (mounted.current) setError(m('saveFailed'));
     } catch (issue) { if (mounted.current) setError(errorText(issue, m('saveFailed'))); }
     finally { pendingRef.current = false; if (mounted.current) setPending(false); }
@@ -93,7 +95,7 @@ export function HolidaySettings({ state, busy, onProfile, onDeleteProfile, onOve
     </fieldset></form>
     <ul className="holiday-rules">{[...(state.holidayOverrides ?? [])].sort((a, b) => a.date.localeCompare(b.date)).map(item => <li key={item.date}><span><strong>{shortDate(item.date)}</strong><small>{item.name ?? t('excludedHoliday')}</small></span><div><button type="button" className="button quiet" disabled={locked} onClick={() => { if (!overrideDirty || window.confirm(t('discard'))) { const value = { date: item.date, mode: item.name === null ? 'exclude' as const : 'add' as const, name: item.name ?? '' }; setOverride(value); setOverrideBase(JSON.stringify(value)); setError(''); } }}>{t('edit')}</button><button type="button" className="button quiet danger-text" disabled={locked} onClick={() => { if (window.confirm(t('resetConfirm'))) void run(() => onDeleteOverride(item.date, state.revision)); }}>{t('reset')}</button></div></li>)}</ul>
     {!state.holidayOverrides?.length && <p className="muted small">{t('overridesEmpty')}</p>}</div>
-    {((profileDirty && profileChanged) || (overrideDirty && overrideChanged) || ((profileDirty || overrideDirty) && state.revision !== revision)) && <p className="holiday-settings-notice" role="status">{t('changed')}</p>}
+    {((profileDirty && profileChanged) || (overrideDirty && overrideChanged) || ((profileDirty || overrideDirty) && revision !== null && state.revision !== revision)) && <p className="holiday-settings-notice" role="status">{t('changed')}</p>}
     {pending && <p className="muted small" role="status">{t('saving')}</p>}{saved && <p className="positive small" role="status">{t('saved')}</p>}{error && <p className="form-error" role="alert">{text(error)}</p>}
   </section>;
 }

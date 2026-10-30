@@ -303,3 +303,17 @@ test('Accounting: export account is opt-in and CSV uses the persisted ledger', a
   await expect(sheet.locator('.timesheet-document')).not.toContainText('Auszahlung Export');
   expect((await getState(page)).accountEntries).toHaveLength(1);
 });
+
+test('Accounting: a saved holiday rule does not report its own save as a concurrent change', async ({ page }) => {
+  await page.goto('/');
+  await openAppAction(page, 'Einstellungen');
+  await page.getByRole('tab', { name: 'Feiertage', exact: true }).click();
+  const holidays = page.getByRole('region', { name: 'Feiertage', exact: true });
+  page.on('dialog', dialog => dialog.accept());
+  await holidays.getByLabel('Gültig ab', { exact: true }).fill(DATE);
+  await holidays.getByRole('combobox', { name: 'Bundesland', exact: true }).selectOption('HE');
+  await holidays.getByRole('button', { name: 'Feiertagsregel speichern', exact: true }).click();
+  await expect(holidays.getByText('Gespeichert.', { exact: true })).toBeVisible();
+  await holidays.getByLabel('Name des Feiertags', { exact: true }).fill('Lokaler Feiertag');
+  await expect(holidays.locator('.holiday-settings-notice')).toHaveCount(0);
+});
