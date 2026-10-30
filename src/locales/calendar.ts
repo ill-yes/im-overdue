@@ -198,7 +198,7 @@ export const calendarMessages = {
     "de": "Aktivitätsdetails"
   },
   "openSource": {
-    "en": "Open source",
+    "en": "Open original",
     "de": "Quelle öffnen"
   },
   "entryCount": {
