@@ -36,11 +36,14 @@ import {
   type AbsenceChange,
 } from '../shared/types.js';
 
-type Dialog = { kind: 'import' | 'settings' | 'timesheet'; id: number; preset?: TimesheetPreset } | null;
-type VacationEditor = { id: number; date: string } | null;
-type WeekCloseEditor = { id: number; week: string } | null;
-type BlockEditor = { id: number; date: string; block?: WorkBlock; initialInput?: BlockInput; initialReuse?: ReusableInput; initialZone?: string } | null;
-type NoteEditor = { id: number; scope: NoteScope; date: string; initialText: string } | null;
+type Dialog = { kind: 'import' | 'settings' | 'timesheet'; id: number; preset?: TimesheetPreset };
+type VacationEditor = { kind: 'vacation'; id: number; date: string };
+type WeekCloseEditor = { kind: 'weekClose'; id: number; week: string };
+type BlockEditor = { kind: 'block'; id: number; date: string; block?: WorkBlock; initialInput?: BlockInput; initialReuse?: ReusableInput; initialZone?: string };
+type NoteEditor = { kind: 'note'; id: number; scope: NoteScope; date: string; initialText: string };
+type ReuseEditor = { kind: 'reuse'; id: number; date: string };
+/** One modal session at a time; its id scopes request errors and React keys. */
+type Editor = Dialog | VacationEditor | WeekCloseEditor | BlockEditor | NoteEditor | ReuseEditor;
 
 function sameBlockValues(a: WorkBlock, b: Pick<WorkBlock, 'start' | 'end' | 'title' | 'note'>): boolean {
   return Temporal.Instant.compare(a.start, b.start) === 0 && Temporal.Instant.compare(a.end, b.end) === 0
@@ -65,12 +68,15 @@ export default function App() {
   const week = weekStartFor(anchorDate);
   const [sources, setSources] = useState<string[]>([]);
   const knownSources = useRef<Set<string> | null>(null);
-  const [dialog, setDialog] = useState<Dialog>(null);
-  const [blockEditor, setBlockEditor] = useState<BlockEditor>(null);
-  const [noteEditor, setNoteEditor] = useState<NoteEditor>(null);
-  const [vacationEditor, setVacationEditor] = useState<VacationEditor>(null);
-  const [weekCloseEditor, setWeekCloseEditor] = useState<WeekCloseEditor>(null);
-  const [reuseDialog, setReuseDialog] = useState<{ id: number; date: string } | null>(null);
+  const [editor, setEditor] = useState<Editor | null>(null);
+  const dialog = editor?.kind === 'import' || editor?.kind === 'settings' || editor?.kind === 'timesheet' ? editor : null;
+  const blockEditor = editor?.kind === 'block' ? editor : null;
+  const noteEditor = editor?.kind === 'note' ? editor : null;
+  const vacationEditor = editor?.kind === 'vacation' ? editor : null;
+  const weekCloseEditor = editor?.kind === 'weekClose' ? editor : null;
+  const reuseDialog = editor?.kind === 'reuse' ? editor : null;
+  /** Late callbacks close only the session they belong to, never a newer one. */
+  const closeEditor = useCallback((session: Editor) => setEditor(current => current === session ? null : current), []);
   const [quickCreate, setQuickCreate] = useState<QuickCreateDraft | null>(null);
   const quickCreateRef = useRef<QuickCreateDraft | null>(null);
   const savedQuickFocus = useRef<{ draft: QuickCreateDraft; blockId?: string; week: string; origin: Element | null } | null>(null);
@@ -98,7 +104,7 @@ export default function App() {
     setSources(current => ids.filter(id => !known || !known.has(id) || current.includes(id)));
     knownSources.current = new Set(ids);
   }, [sourceIds]);
-  const editorOpen = Boolean(dialog || blockEditor || noteEditor || reuseDialog || vacationEditor || weekCloseEditor);
+  const editorOpen = editor !== null;
   const error = displayText(failure?.message);
   const { focused, mainRef, focusToggle, enterFocus, leaveFocus, invalidateFocusOrigin } = useCalendarFocus({
     week,
@@ -145,32 +151,30 @@ export default function App() {
       setAccountVisited(true);
     }
   };
-  const openDialog = (kind: NonNullable<Dialog>['kind']) => {
+  const openDialog = (kind: Dialog['kind']) => {
     if (!canLeavePage()) return;
     replaceQuickCreate(null);
-    setDialog({ kind, id: ++nextSessionId.current });
+    setEditor({ kind, id: ++nextSessionId.current });
   };
   const openTimesheet = (preset?: TimesheetPreset) => {
     if (!canLeavePage()) return;
     replaceQuickCreate(null);
-    setDialog({ kind: 'timesheet', id: ++nextSessionId.current, preset });
+    setEditor({ kind: 'timesheet', id: ++nextSessionId.current, preset });
   };
   const openEditor = (date: string, block?: WorkBlock) => {
     replaceQuickCreate(null);
-    setBlockEditor({ id: ++nextSessionId.current, date, block });
+    setEditor({ kind: 'block', id: ++nextSessionId.current, date, block });
   };
   const openVacation = (date: string) => {
     replaceQuickCreate(null);
-    if (dialog) {
-      (vacationToggle.current ?? reportsToggle.current)?.focus({ preventScroll: true });
-      setDialog(null);
-    }
-    setVacationEditor({ id: ++nextSessionId.current, date });
+    if (dialog) (vacationToggle.current ?? reportsToggle.current)?.focus({ preventScroll: true });
+    setEditor({ kind: 'vacation', id: ++nextSessionId.current, date });
   };
   const openNote = (scope: NoteScope, date: string) => {
     if (!state || noteEditor) return;
     replaceQuickCreate(null);
-    setNoteEditor({
+    setEditor({
+      kind: 'note',
       id: ++nextSessionId.current,
       scope,
       date,
@@ -179,7 +183,7 @@ export default function App() {
   };
   useEffect(() => {
     if (view !== 'week' || editorOpen) replaceQuickCreate(null);
-  }, [view, dialog, blockEditor, noteEditor, reuseDialog, vacationEditor, weekCloseEditor, replaceQuickCreate]);
+  }, [view, editor, replaceQuickCreate]);
 
   const closed = state?.weeks.some((w) => w.weekStart === week && w.status === 'closed') ?? false;
   const currentDay = today(state?.settings.timezone ?? 'Europe/Berlin');
@@ -233,7 +237,8 @@ export default function App() {
   const quickDetails = (draft: QuickCreateDraft, input: BlockInput) => {
     if (quickCreateRef.current !== draft) return;
     closeQuickCreate(draft, true);
-    setBlockEditor({
+    setEditor({
+      kind: 'block',
       id: ++nextSessionId.current,
       date: localDate(input.start, draft.zone),
       initialInput: input,
@@ -279,7 +284,7 @@ export default function App() {
       m('timeUpdated'),
     );
   };
-  const saveEditor = async (editor: NonNullable<BlockEditor>, input: BlockInput): Promise<boolean> => {
+  const saveEditor = async (editor: BlockEditor, input: BlockInput): Promise<boolean> => {
     const snapshot = getCurrentState();
     if (!snapshot || isRequestInFlight()) return false;
     if (editor.block) {
@@ -300,10 +305,10 @@ export default function App() {
           input.rememberTemplate ? m('timeSavedTemplate') : m('timeSaved'),
           editor.id,
         );
-    if (ok) setBlockEditor((current) => (current === editor ? null : current));
+    if (ok) closeEditor(editor);
     return ok;
   };
-  const deleteEditor = async (editor: NonNullable<BlockEditor>): Promise<boolean> => {
+  const deleteEditor = async (editor: BlockEditor): Promise<boolean> => {
     if (
       !editor.block ||
       !window.confirm(
@@ -316,13 +321,13 @@ export default function App() {
       m('timeDeleted'),
       editor.id,
     );
-    if (ok) setBlockEditor((current) => (current === editor ? null : current));
+    if (ok) closeEditor(editor);
     return ok;
   };
   const setWeekStatus = async () => {
     if (!closed) {
       replaceQuickCreate(null);
-      setWeekCloseEditor({ id: ++nextSessionId.current, week });
+      setEditor({ kind: 'weekClose', id: ++nextSessionId.current, week });
       return;
     }
     await applyMutation(
@@ -330,22 +335,22 @@ export default function App() {
       closed ? m('weekReopened') : m('weekClosed'),
     );
   };
-  const confirmWeekClose = async (editor: NonNullable<WeekCloseEditor>, expectedRevision: number, reviewKey: string) => {
+  const confirmWeekClose = async (editor: WeekCloseEditor, expectedRevision: number, reviewKey: string) => {
     const ok = await applyMutation(
       () => api.setWeek(editor.week, 'closed', expectedRevision, true, true, reviewKey),
       m('weekClosed'),
       editor.id,
     );
-    if (ok) setWeekCloseEditor((current) => current === editor ? null : current);
+    if (ok) closeEditor(editor);
     return ok;
   };
-  const saveVacationEditor = async (editor: NonNullable<VacationEditor>, days: AbsenceChange[], expectedRevision: number) => {
+  const saveVacationEditor = async (editor: VacationEditor, days: AbsenceChange[], expectedRevision: number) => {
     const ok = await applyMutation(
       (_revision, confirmed) => api.saveAbsences(days, expectedRevision, confirmed),
       accountingMessage('saved'),
       editor.id,
     );
-    if (ok) setVacationEditor((current) => current === editor ? null : current);
+    if (ok) closeEditor(editor);
     return ok;
   };
   const saveVacationAllowance = (sessionId: number, input: VacationAllowance) => applyMutation(
@@ -376,7 +381,7 @@ export default function App() {
     applyMutation(() => api.renameDataSource(id, name, expectedRevision), m('sourceRenamed'), sessionId);
   const deleteDataSource = (sessionId: number, id: string, expectedRevision: number) =>
     applyMutation(() => api.deleteDataSource(id, expectedRevision), m('sourceDeleted'), sessionId);
-  const saveNoteEditor = async (editor: NonNullable<NoteEditor>, text: string): Promise<boolean> => {
+  const saveNoteEditor = async (editor: NoteEditor, text: string): Promise<boolean> => {
     if (!state || busy || isRequestInFlight()) return false;
     const currentText = noteText(state.notes, editor.scope, editor.date);
     if (
@@ -392,7 +397,7 @@ export default function App() {
       m(editor.scope === 'day' ? text.trim() ? 'dayNoteSaved' : 'dayNoteRemoved' : text.trim() ? 'weekNoteSaved' : 'weekNoteRemoved'),
       editor.id,
     );
-    if (ok) setNoteEditor((current) => (current === editor ? null : current));
+    if (ok) closeEditor(editor);
     return ok;
   };
   const toggleSource = (source: string) =>
@@ -467,7 +472,7 @@ return (
             }}
             actions={{
               navigate, movePeriod, setView: next => { if (next === 'month') { replaceQuickCreate(null); leaveFocus(); } setView(next); },
-              openReuse: () => { replaceQuickCreate(null); setReuseDialog({ id: ++nextSessionId.current, date: entryDate }); },
+              openReuse: () => { replaceQuickCreate(null); setEditor({ kind: 'reuse', id: ++nextSessionId.current, date: entryDate }); },
               toggleFocus: () => focused ? leaveFocus() : enterFocus(), openReportsMonth, undoLastChange,
               toggleSource, openNote, openTimesheet, setWeekStatus, closeReview, showActivity, openDay,
             }}
@@ -476,7 +481,7 @@ return (
             onOpening={(input, revision) => applyMutation(() => api.saveAccountOpening(input, revision), accountingMessage('saved'), pageSessions.reports)}
             onEntry={(id, input, revision) => applyMutation(() => api.saveAccountEntry(id, input, revision), accountingMessage('saved'), pageSessions.reports)}
             onDeleteEntry={(id, revision) => applyMutation(() => api.deleteAccountEntry(id, revision), accountingMessage('saved'), pageSessions.reports)} /></div>}
-          <div hidden={page !== 'templates'} className="workspace-page-panel"><TemplatesPage active={page === 'templates'} state={state} date={entryDate} busy={busy} requestError={failure?.sessionId === pageSessions.templates ? error : ''} onSelect={input => setBlockEditor({ id: ++nextSessionId.current, date: entryDate, initialReuse: input })} onSaveTemplate={(input,id) => saveTemplate(pageSessions.templates,input,id)} onDeleteTemplate={id => deleteTemplate(pageSessions.templates,id)} onBack={() => goToPage('calendar')} onLeaveGuardChange={registerTemplatesGuard} /></div>
+          <div hidden={page !== 'templates'} className="workspace-page-panel"><TemplatesPage active={page === 'templates'} state={state} date={entryDate} busy={busy} requestError={failure?.sessionId === pageSessions.templates ? error : ''} onSelect={input => setEditor({ kind: 'block', id: ++nextSessionId.current, date: entryDate, initialReuse: input })} onSaveTemplate={(input,id) => saveTemplate(pageSessions.templates,input,id)} onDeleteTemplate={id => deleteTemplate(pageSessions.templates,id)} onBack={() => goToPage('calendar')} onLeaveGuardChange={registerTemplatesGuard} /></div>
         </>}
       </main>
       {state && quickCreate && (
@@ -500,12 +505,12 @@ return (
           dataSources={state.dataSources}
           onAnalyze={handleAnalyze}
           onCreateSource={(type, name) => createDataSource(dialog.id, type, name)}
-          onClose={() => setDialog((current) => (current === dialog ? null : current))}
+          onClose={() => closeEditor(dialog)}
           onPreview={handlePreview}
           onCommit={importCommit}
           onOpenPeriod={(date) => {
             openDay(date);
-            setDialog((current) => (current === dialog ? null : current));
+            closeEditor(dialog);
           }}
         />
       )}
@@ -526,9 +531,9 @@ return (
             if (revealSourceId && state.dataSources.some(source => source.id === revealSourceId))
               setSources(current => current.includes(revealSourceId) ? current : [...current, revealSourceId]);
             openDay(date);
-            setDialog(current => current === dialog ? null : current);
+            closeEditor(dialog);
           }}
-          onClose={() => setDialog((current) => (current === dialog ? null : current))}
+          onClose={() => closeEditor(dialog)}
           onTimezone={(zone) =>
             applyMutation(
               (revision, confirm) => api.settings(zone, revision, confirm),
@@ -552,7 +557,7 @@ return (
         />
       )}
       {dialog?.kind === 'timesheet' && (
-        <TimesheetDialog key={dialog.id} anchor={anchorDate} preset={dialog.preset} onLoad={api.timesheet} onClose={() => setDialog((current) => current === dialog ? null : current)} />
+        <TimesheetDialog key={dialog.id} anchor={anchorDate} preset={dialog.preset} onLoad={api.timesheet} onClose={() => closeEditor(dialog)} />
       )}
       {state && vacationEditor && (
         <AbsenceDialog
@@ -562,7 +567,7 @@ return (
           busy={busy}
           requestError={failure?.sessionId === vacationEditor.id ? error : ''}
           onSave={(days, revision) => saveVacationEditor(vacationEditor, days, revision)}
-          onClose={() => setVacationEditor((current) => current === vacationEditor ? null : current)}
+          onClose={() => closeEditor(vacationEditor)}
         />
       )}
       {state && weekCloseEditor && (
@@ -574,8 +579,8 @@ return (
           busy={busy}
           requestError={failure?.sessionId === weekCloseEditor.id ? error : ''}
           onConfirm={(revision, reviewKey) => confirmWeekClose(weekCloseEditor, revision, reviewKey)}
-          onReviewDay={(date) => { setWeekCloseEditor(null); openReview(date); }}
-          onClose={() => setWeekCloseEditor((current) => current === weekCloseEditor ? null : current)}
+          onReviewDay={(date) => { closeEditor(weekCloseEditor); openReview(date); }}
+          onClose={() => closeEditor(weekCloseEditor)}
         />
       )}
       {state && blockEditor && (
@@ -593,7 +598,7 @@ return (
           zone={state.settings.timezone}
           busy={busy}
           requestError={failure?.sessionId === blockEditor.id ? error : ''}
-          onClose={() => setBlockEditor((current) => (current === blockEditor ? null : current))}
+          onClose={() => closeEditor(blockEditor)}
           onSave={(input) => saveEditor(blockEditor, input)}
           onDelete={() => deleteEditor(blockEditor)}
           onSaveTemplate={(input, id) => saveTemplate(blockEditor.id, input, id)}
@@ -607,10 +612,10 @@ return (
           date={reuseDialog.date}
           busy={busy}
           requestError={failure?.sessionId === reuseDialog.id ? error : ''}
-          onClose={() => setReuseDialog((current) => current === reuseDialog ? null : current)}
+          onClose={() => closeEditor(reuseDialog)}
           onSelect={(input) => {
-            setReuseDialog((current) => current === reuseDialog ? null : current);
-            setBlockEditor({ id: ++nextSessionId.current, date: reuseDialog.date, initialReuse: input });
+            closeEditor(reuseDialog);
+            setEditor({ kind: 'block', id: ++nextSessionId.current, date: reuseDialog.date, initialReuse: input });
           }}
           onSaveTemplate={(input, id) => saveTemplate(reuseDialog.id, input, id)}
           onDeleteTemplate={(id) => deleteTemplate(reuseDialog.id, id)}
@@ -626,7 +631,7 @@ return (
           busy={busy}
           requestError={failure?.sessionId === noteEditor.id ? error : ''}
           onSave={(text) => saveNoteEditor(noteEditor, text)}
-          onClose={() => setNoteEditor((current) => (current === noteEditor ? null : current))}
+          onClose={() => closeEditor(noteEditor)}
         />
       )}
     </div>
