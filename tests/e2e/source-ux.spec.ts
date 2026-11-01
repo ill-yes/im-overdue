@@ -526,9 +526,8 @@ test('discarding a file read on Settings tab switch cannot replace a newer paste
     const original = File.prototype.text;
     File.prototype.text = function () {
       if (this.name !== 'langsam.json') return original.call(this);
-      const file = this;
       return new Promise<string>((resolve, reject) => {
-        (window as unknown as { releaseImportFile: () => void }).releaseImportFile = () => { void original.call(file).then(resolve, reject); };
+        (window as unknown as { releaseImportFile: () => void }).releaseImportFile = () => { void original.call(this).then(resolve, reject); };
       });
     };
   });

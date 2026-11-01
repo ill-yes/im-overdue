@@ -52,11 +52,16 @@ Datenbank, WAL/SHM, Backups, `.env` und generierte Ausgaben gehören nicht in Gi
 
 ```sh
 npm run typecheck
+npm run lint
 npm test
 npm run build
 npx playwright install chromium
 npm run test:e2e
 ```
+
+`npm run lint` führt ESLint mit TypeScript- und React-Hook-Regeln aus. Fehler
+lassen die CI scheitern; Warnungen zu Hook-Abhängigkeiten dienen der Prüfung,
+weil manche Effekte bewusst nur auf ausgewählte Änderungen reagieren.
 
 Die Browser-Suite prüft die gebaute App. Tests nutzen isolierte temporäre
 Datenbanken und nicht `data/im-overdue.sqlite`. Browserberichte und Screenshots

@@ -7,7 +7,7 @@ import { createServer, type ViteDevServer } from 'vite';
 import react from '@vitejs/plugin-react';
 import type { AppState, ImportAnalysis, ImportPreview } from '../../shared/types.js';
 
-const test = base.extend<{}, { requestHarnessUrl: string }>({
+const test = base.extend<Record<never, never>, { requestHarnessUrl: string }>({
   requestHarnessUrl: [async ({}, use) => {
     const directory = await mkdtemp(join(tmpdir(), 'im-overdue-request-harness-'));
     let server: ViteDevServer | undefined;

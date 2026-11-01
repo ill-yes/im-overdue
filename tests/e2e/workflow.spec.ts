@@ -245,9 +245,8 @@ test.describe.serial('personal local time-account workflow', () => {
     await page.addInitScript(() => {
       const original = File.prototype.text;
       File.prototype.text = function () {
-        const file = this;
-        return new Promise<string>((resolve, reject) => {
-          (window as unknown as { releaseFile: () => void }).releaseFile = () => { void original.call(file).then(resolve, reject); };
+          return new Promise<string>((resolve, reject) => {
+          (window as unknown as { releaseFile: () => void }).releaseFile = () => { void original.call(this).then(resolve, reject); };
         });
       };
     });

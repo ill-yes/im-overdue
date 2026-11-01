@@ -27,6 +27,7 @@ async function command(binary, args, timeout = 60_000) {
   catch (error) {
     // execFile errors include the full command line, which can contain the test password.
     const detail = String(error.stderr ?? '').replaceAll(password, '[redacted]').replace(/im_overdue_session=[a-f0-9]+/g, 'im_overdue_session=[redacted]').slice(-1600);
+    // eslint-disable-next-line preserve-caught-error -- the cause would carry the unredacted command line.
     throw new Error(`${binary} ${args[0] ?? ''} failed (exit ${error.code ?? 'timeout'}): ${detail}`);
   }
 }

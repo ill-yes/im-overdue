@@ -121,7 +121,7 @@ test('English import errors and week review preserve the technical contract', as
 });
 
 for (const locale of ['en', 'de'] as const) {
-  test(`print and CSV use ${locale} labels while preserving data, numbers and formula protection`, async ({ page }, testInfo) => {
+  test(`print and CSV use ${locale} labels while preserving data, numbers and formula protection`, async ({ page }) => {
     const words = locale === 'en'
       ? { more: 'More calendar actions', sheet: 'Timesheet', dialog: 'Export timesheet', closed: 'Closed weeks only', preview: 'Export preview', title: 'Timesheet', print: 'PDF / Print' }
       : { more: 'Weitere Kalenderaktionen', sheet: 'Stundenzettel', dialog: 'Stundenzettel exportieren', closed: 'Nur abgeschlossene Wochen', preview: 'Exportvorschau', title: 'Arbeitszeitnachweis', print: 'PDF / Drucken' };
@@ -149,7 +149,7 @@ for (const locale of ['en', 'de'] as const) {
     const bytes = await readFile(path);
     expect([...bytes.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
     const csv = bytes.toString('utf8');
-    expect(csv.split('\r\n')[0].replaceAll('\"', '').replace(/^\uFEFF/, '')).toContain(locale === 'en' ? 'Name;Date;Status;Work (minutes);Leave (minutes);Target (minutes);Balance (minutes)' : 'Name;Datum;Status;Ist (Minuten);Urlaub (Minuten);Soll (Minuten);Saldo (Minuten)');
+    expect(csv.split('\r\n')[0].replaceAll('"', '').replace(/^\uFEFF/, '')).toContain(locale === 'en' ? 'Name;Date;Status;Work (minutes);Leave (minutes);Target (minutes);Balance (minutes)' : 'Name;Datum;Status;Ist (Minuten);Urlaub (Minuten);Soll (Minuten);Saldo (Minuten)');
     expect(csv).toContain('2026-09-28');
     expect(csv).toContain(';120;0;480;-360;');
     expect(csv).toContain("'=SUM(1;2)");

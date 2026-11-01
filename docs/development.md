@@ -52,11 +52,16 @@ database, its WAL/SHM files, backups, `.env` and generated output out of Git.
 
 ```sh
 npm run typecheck
+npm run lint
 npm test
 npm run build
 npx playwright install chromium
 npm run test:e2e
 ```
+
+`npm run lint` runs ESLint with TypeScript and React hook rules. Errors fail CI;
+hook dependency warnings are shown for review because some effects run on
+purpose only for selected changes.
 
 The browser suite runs against the built app. Tests use temporary isolated
 databases, not `data/im-overdue.sqlite`. Browser reports and screenshots go to

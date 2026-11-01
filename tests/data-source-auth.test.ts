@@ -17,6 +17,7 @@ it('protects source, package and import APIs with the existing session and origi
     const address = server.address();
     if (!address || typeof address === 'string') throw new Error('Missing isolated port');
     const request = (path: string, method = 'GET', body?: unknown, headers: Record<string, string> = {}) =>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- assertions read loosely shaped API bodies.
       new Promise<{ status: number; cookie?: string; json: () => any }>((resolve, reject) => {
         const payload = body === undefined ? undefined : JSON.stringify(body);
         const req = httpRequest({ hostname: '127.0.0.1', port: address.port, path, method, headers: {

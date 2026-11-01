@@ -64,6 +64,7 @@ export function timesheetSummary(snapshot: TimesheetSnapshot, options: Pick<Time
 
 /** Quote every text cell, and prevent spreadsheet formula evaluation of user text. */
 function csvText(value: string): string {
+  // eslint-disable-next-line no-control-regex -- leading control characters must not hide a spreadsheet formula.
   const safe = /^[\s\u0000-\u001f\u007f-\u009f]*[=+@-]/u.test(value) ? `'${value}` : value;
   return `"${safe.replace(/\r\n|\r|\n/g, '\r\n').replace(/"/g, '""')}"`;
 }
