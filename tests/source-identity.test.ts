@@ -6,8 +6,8 @@ import { activityDataSourceId, activityIsVisible, activityKey } from '../shared/
 import { dayReviewData, reviewRowTime } from '../shared/day-review.js';
 import { monthOverview } from '../shared/month.js';
 import type { Activity, AppState, DataSource } from '../shared/types.js';
-import { Calendar, type CalendarProps } from '../src/Calendar.js';
-import { MonthCalendar } from '../src/MonthCalendar.js';
+import { Calendar, type CalendarProps } from '../src/calendar/Calendar.js';
+import { MonthCalendar } from '../src/calendar/MonthCalendar.js';
 import { ActivityDetailDialog } from '../src/calendar/ActivityDetailDialog.js';
 import { calendarWeekDays } from '../src/calendar/week-view-model.js';
 import { DayReview } from '../src/components/DayReview.js';

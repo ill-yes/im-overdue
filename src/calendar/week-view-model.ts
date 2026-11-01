@@ -10,7 +10,7 @@ import {
   Temporal,
 } from '../../shared/time.js';
 import type { AppState } from '../../shared/types.js';
-import { activityClusters, distributeActivities, HOUR_PX, workGaps } from '../calendar-model.js';
+import { activityClusters, distributeActivities, HOUR_PX, workGaps } from './calendar-model.js';
 
 /** Prepare the visible week in elapsed minutes, including 23- and 25-hour days. */
 export function calendarWeekDays(dates: string[], state: AppState, enabledSources: string[]) {

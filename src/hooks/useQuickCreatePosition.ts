@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { dayBounds, minuteInDay } from '../../shared/time.js';
-import { HOUR_PX } from '../calendar-model';
+import { HOUR_PX } from '../calendar/calendar-model';
 import type { QuickCreateDraft } from '../quick-create';
 
 export interface QuickRect { left: number; right: number; top: number; bottom: number }

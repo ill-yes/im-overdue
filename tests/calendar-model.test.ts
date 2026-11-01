@@ -9,7 +9,7 @@ import {
   updateCalendarDraft,
   workGaps,
   type CalendarDraft,
-} from '../src/calendar-model.js';
+} from '../src/calendar/calendar-model.js';
 import type { Activity, WorkBlock } from '../shared/types.js';
 
 const activity = (id: string, start: string, end: string | null = null): Activity => ({

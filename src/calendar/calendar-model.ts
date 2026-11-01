@@ -4,10 +4,10 @@ import {
   toInstantRange,
   type ActivityInterval,
   type InstantRange,
-} from '../shared/activities.js';
-import { dayBounds, instantAtMinute, minutesBetween, Temporal } from '../shared/time.js';
-import type { Activity, BlockInput, WorkBlock } from '../shared/types.js';
-import { activityIsVisible } from '../shared/data-sources.js';
+} from '../../shared/activities.js';
+import { dayBounds, instantAtMinute, minutesBetween, Temporal } from '../../shared/time.js';
+import type { Activity, BlockInput, WorkBlock } from '../../shared/types.js';
+import { activityIsVisible } from '../../shared/data-sources.js';
 
 export const HOUR_PX = 56;
 export const SNAP = 15;

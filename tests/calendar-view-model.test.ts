@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AppState, WorkBlock } from '../shared/types.js';
-import { HOUR_PX } from '../src/calendar-model.js';
+import { HOUR_PX } from '../src/calendar/calendar-model.js';
 import { calendarWeekDays } from '../src/calendar/week-view-model.js';
 
 function state(overrides: Partial<AppState> = {}): AppState {

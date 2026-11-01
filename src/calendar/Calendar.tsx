@@ -1,10 +1,10 @@
-import { useMessages, errorText, type TextValue } from './i18n.js';
-import { calendarMessages } from './locales/calendar.js';
+import { useMessages, errorText, type TextValue } from '../i18n.js';
+import { calendarMessages } from '../locales/calendar.js';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { X } from 'lucide-react';
-import { noteText } from '../shared/notes.js';
-import { activityKey, activitySourceName } from '../shared/data-sources.js';
+import { noteText } from '../../shared/notes.js';
+import { activityKey, activitySourceName } from '../../shared/data-sources.js';
 import {
   addDays,
   clipToDay,
@@ -15,8 +15,8 @@ import {
   minuteInDay,
   minutesBetween,
   Temporal,
-} from '../shared/time.js';
-import type { Activity, AppState, BlockInput, Source, WorkBlock } from '../shared/types.js';
+} from '../../shared/time.js';
+import type { Activity, AppState, BlockInput, Source, WorkBlock } from '../../shared/types.js';
 import {
   calendarDraftOutcome,
   HOUR_PX,
@@ -27,12 +27,12 @@ import {
   type CalendarDraft,
   type WorkGap,
 } from './calendar-model.js';
-import { duration, shortDate as noteDateLabel } from './format.js';
-import { ActivityDetailDialog } from './calendar/ActivityDetailDialog.js';
-import { CalendarDayHeading } from './calendar/CalendarDayHeading.js';
-import { dateObj, durationLabel, fullDate, shortDate, weekday } from './calendar/format.js';
-import { calendarWeekDays } from './calendar/week-view-model.js';
-import type { QuickCreateAnchor, QuickCreateDraft } from './quick-create';
+import { duration, shortDate as noteDateLabel } from '../format.js';
+import { ActivityDetailDialog } from './ActivityDetailDialog.js';
+import { CalendarDayHeading } from './CalendarDayHeading.js';
+import { dateObj, durationLabel, fullDate, shortDate, weekday } from './format.js';
+import { calendarWeekDays } from './week-view-model.js';
+import type { QuickCreateAnchor, QuickCreateDraft } from '../quick-create';
 import './calendar.css';
 
 type Draft = CalendarDraft;

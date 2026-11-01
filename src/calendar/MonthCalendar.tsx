@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
-import { useMessages } from './i18n.js';
-import { calendarMessages } from './locales/calendar.js';
-import type { MonthOverview } from '../shared/month.js';
+import { useMessages } from '../i18n.js';
+import { calendarMessages } from '../locales/calendar.js';
+import type { MonthOverview } from '../../shared/month.js';
 import { StickyNote } from 'lucide-react';
-import { noteText } from '../shared/notes.js';
-import type { AppState, CalendarNote, Source, VacationDay } from '../shared/types.js';
-import { duration, longDate, sourceLabel } from './format.js';
+import { noteText } from '../../shared/notes.js';
+import type { AppState, CalendarNote, Source, VacationDay } from '../../shared/types.js';
+import { duration, longDate, sourceLabel } from '../format.js';
 import './month-calendar.css';
-import { DayAbsenceSummary, dayAbsenceItems } from './components/DayAbsenceSummary.js';
+import { DayAbsenceSummary, dayAbsenceItems } from '../components/DayAbsenceSummary.js';
 
 function dayNumber(date: string): string {
   return String(Number(date.slice(8, 10)));
