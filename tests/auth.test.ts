@@ -3,6 +3,7 @@ import { request as httpRequest, type Server } from 'node:http';
 import { createApp } from '../server/app.js';
 import { createAuthentication } from '../server/auth.js';
 import { openDatabase } from '../server/db.js';
+import { legacyMessage as de } from '../shared/server-messages.js';
 
 const password = 'correct horse battery staple';
 const origin = 'https://overdue.example:444';
@@ -51,7 +52,7 @@ describe('password API', () => {
     for (const path of ['/api/state', '/api/backup', '/api/timesheet', '/api/unknown', '/api/auth/other', '/api/auth/session/', '/api/auth/SESSION']) {
       const response = await app.request(path);
       expect(response.status, path).toBe(401);
-      expect(response.json()).toEqual({ code: 'AUTH_REQUIRED', message: 'Bitte anmelden.', messageKey: 'error.auth.required' });
+      expect(response.json()).toEqual({ code: 'AUTH_REQUIRED', message: de('error.auth.required'), messageKey: 'error.auth.required' });
     }
     expect((await app.request('/api/backup', 'HEAD')).status).toBe(401);
     expect((await app.request('/api/import/preview', 'POST', { text: 'a'.repeat(7 * 1024 * 1024) })).status).toBe(401);
@@ -62,7 +63,7 @@ describe('password API', () => {
     const app = await start();
     const invalid = await app.login('wrong password value');
     expect(invalid.status).toBe(401);
-    expect(invalid.json()).toEqual({ code: 'LOGIN_INVALID', message: 'Passwort ist nicht korrekt.', messageKey: 'error.auth.invalid' });
+    expect(invalid.json()).toEqual({ code: 'LOGIN_INVALID', message: de('error.auth.invalid'), messageKey: 'error.auth.invalid' });
     const login = await app.login();
     expect(login.status).toBe(200);
     expect(login.json()).toEqual({ required: true, authenticated: true });
@@ -115,7 +116,7 @@ describe('password API', () => {
     for (let i = 0; i < 9; i++) expect((await app.login('wrong password value')).status).toBe(401);
     const limited = await app.login();
     expect(limited.status).toBe(429);
-    expect(limited.json()).toEqual({ code: 'LOGIN_LIMITED', message: 'Zu viele Anmeldeversuche. Bitte spaeter erneut versuchen.', messageKey: 'error.auth.limited' });
+    expect(limited.json()).toEqual({ code: 'LOGIN_LIMITED', message: de('error.auth.limited'), messageKey: 'error.auth.limited' });
     expect(limited.headers['retry-after']).toBe('300');
     expect((await app.request('/api/state', 'GET', undefined, { Cookie: cookie! })).status).toBe(200);
     now += 5 * 60 * 1000;
@@ -127,7 +128,7 @@ describe('password API', () => {
     const results = await Promise.all([app.login(), app.login()]);
     expect(results.map(result => result.status).sort()).toEqual([200, 429]);
     expect(results.find(result => result.status === 429)?.headers['retry-after']).toBe('1');
-    expect(results.find(result => result.status === 429)?.json()).toEqual({ code: 'LOGIN_LIMITED', message: 'Anmeldung wird bereits geprueft.', messageKey: 'error.auth.busy' });
+    expect(results.find(result => result.status === 429)?.json()).toEqual({ code: 'LOGIN_LIMITED', message: de('error.auth.busy'), messageKey: 'error.auth.busy' });
   });
 
   it('keeps at most 64 sessions and expires the oldest session when a new one is created', async () => {

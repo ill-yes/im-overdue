@@ -45,7 +45,7 @@ export function createApp(db: DatabaseSync, options: { origin?: string; auth?: A
   registerBlockRoutes(app, db);
   registerWeekRoutes(app, db);
   registerSettingsRoutes(app, db);
-  app.use('/api', (_req, res) => { res.status(404).json(serverProblem('API-Endpunkt nicht gefunden.', 'error.http.notFound')); });
+  app.use('/api', (_req, res) => { res.status(404).json(serverProblem('error.http.notFound')); });
   app.use(errorHandler);
   return app;
 }

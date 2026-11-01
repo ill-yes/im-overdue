@@ -15,7 +15,7 @@ export function registerExportRoutes(app: Express, db: DatabaseSync): void {
     const from = validDate(req.query.from);
     const to = validDate(req.query.to);
     const length = Temporal.PlainDate.from(from).until(Temporal.PlainDate.from(to)).days;
-    if (length < 1 || length > 366) throw bad('Exportbereich muss 1 bis 366 Kalendertage umfassen.', 'error.timesheet.range');
+    if (length < 1 || length > 366) throw bad('error.timesheet.range');
     db.exec('BEGIN');
     try {
       const snapshot = createTimesheetSnapshot(readState(db), from, to);

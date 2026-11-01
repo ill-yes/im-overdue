@@ -1,4 +1,4 @@
-import type { MessageParams, MessageProblem, Messages } from './i18n.js';
+import { translate, type MessageParams, type MessageProblem, type Messages } from './i18n.js';
 
 export const serverMessages = {
   "error.account.minutes": { en: "Minutes must be a whole number between -1,000,000,000 and 1,000,000,000.", de: "Minuten müssen eine ganze Zahl zwischen -1.000.000.000 und 1.000.000.000 sein." },
@@ -107,16 +107,22 @@ export const serverMessages = {
 
 export type ServerMessageKey = keyof typeof serverMessages;
 
-/** Keep the legacy message while exposing a stable, language-independent descriptor. */
-export function serverProblem(message: string, messageKey: ServerMessageKey, messageParams?: MessageParams): MessageProblem {
-  return { message, messageKey, ...(messageParams ? { messageParams } : {}) };
+/** The legacy `message` field stays German for existing clients; it is derived from the catalog. */
+export function legacyMessage(messageKey: ServerMessageKey, messageParams?: MessageParams): string {
+  return translate(serverMessages, messageKey, messageParams, 'de');
+}
+
+/** A stable, language-independent descriptor plus the legacy German message. */
+export function serverProblem(messageKey: ServerMessageKey, messageParams?: MessageParams): MessageProblem {
+  return { message: legacyMessage(messageKey, messageParams), messageKey, ...(messageParams ? { messageParams } : {}) };
 }
 
 export class MessageError extends Error {
-  constructor(message: string, public messageKey: ServerMessageKey, public messageParams?: MessageParams) { super(message); }
+  constructor(public messageKey: ServerMessageKey, public messageParams?: MessageParams) { super(legacyMessage(messageKey, messageParams)); }
 }
 
 export function importProblem(error: unknown, fallback: 'error.import.invalid' | 'error.import.activity'): MessageProblem {
-  return error instanceof MessageError ? serverProblem(error.message, error.messageKey, error.messageParams)
-    : serverProblem(error instanceof Error ? error.message : fallback === 'error.import.activity' ? 'Ungueltige Aktivitaet.' : 'Importformat ungueltig.', fallback);
+  if (error instanceof MessageError) return serverProblem(error.messageKey, error.messageParams);
+  // Parser errors carry their own detail; anything else falls back to the catalog text.
+  return error instanceof Error ? { message: error.message, messageKey: fallback } : serverProblem(fallback);
 }

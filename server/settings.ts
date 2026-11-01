@@ -29,9 +29,9 @@ export function registerSettingsRoutes(app: Express, db: DatabaseSync): void {
   app.post('/api/profiles', route((req, res) => {
     const b = body(req);
     const effective = b.effectiveFrom === null ? null : monday(b.effectiveFrom);
-    if (!Number.isInteger(b.weeklyMinutes) || (b.weeklyMinutes as number) < 0 || (b.weeklyMinutes as number) > 10080) throw bad('weeklyMinutes muss zwischen 0 und 10080 liegen.', 'error.validation.weeklyMinutes');
+    if (!Number.isInteger(b.weeklyMinutes) || (b.weeklyMinutes as number) < 0 || (b.weeklyMinutes as number) > 10080) throw bad('error.validation.weeklyMinutes');
     if (!Array.isArray(b.workdays) || b.workdays.length < 1 || b.workdays.length > 7 ||
-      b.workdays.some(x => !Number.isInteger(x) || x < 1 || x > 7) || new Set(b.workdays).size !== b.workdays.length) throw bad('workdays muss eindeutige Wochentage 1 bis 7 enthalten.', 'error.validation.workdays');
+      b.workdays.some(x => !Number.isInteger(x) || x < 1 || x > 7) || new Set(b.workdays).size !== b.workdays.length) throw bad('error.validation.workdays');
     const state = mutate(db, b, old => {
       const next = old.profiles.filter(p => p.effectiveFrom !== null && (effective === null || p.effectiveFrom > effective))
         .sort((a, z) => a.effectiveFrom!.localeCompare(z.effectiveFrom!))[0]?.effectiveFrom;

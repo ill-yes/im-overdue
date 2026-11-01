@@ -14,53 +14,53 @@ function record(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 function timestamp(value: unknown, field: string): string {
-  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T/.test(value) || !hasOffset.test(value)) throw new MessageError(`${field}: Zeitstempel mit UTC-Offset oder Z erforderlich.`, 'error.import.timestampOffset', { field });
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T/.test(value) || !hasOffset.test(value)) throw new MessageError('error.import.timestampOffset', { field });
   try { return Temporal.Instant.from(value).toString(); }
-  catch { throw new MessageError(`${field}: ungueltiger Zeitstempel.`, 'error.import.timestamp', { field }); }
+  catch { throw new MessageError('error.import.timestamp', { field }); }
 }
 function validate(row: unknown): Activity {
-  if (!record(row)) throw new MessageError('Datensatz muss ein Objekt sein.', 'error.import.row');
-  if (typeof row.source !== 'string' || !SOURCES.includes(row.source as Activity['source'])) throw new MessageError('Unbekannte Quelle.', 'error.import.source');
-  if (typeof row.id !== 'string' || !row.id.trim() || row.id.length > 500) throw new MessageError('ID fehlt oder ist zu lang.', 'error.import.id');
-  if (typeof row.title !== 'string' || !row.title.trim() || row.title.length > 1000) throw new MessageError('Titel fehlt oder ist zu lang.', 'error.import.title');
+  if (!record(row)) throw new MessageError('error.import.row');
+  if (typeof row.source !== 'string' || !SOURCES.includes(row.source as Activity['source'])) throw new MessageError('error.import.source');
+  if (typeof row.id !== 'string' || !row.id.trim() || row.id.length > 500) throw new MessageError('error.import.id');
+  if (typeof row.title !== 'string' || !row.title.trim() || row.title.length > 1000) throw new MessageError('error.import.title');
   const start = timestamp(row.start, 'start');
   const end = row.end === null || row.end === undefined || row.end === '' ? null : timestamp(row.end, 'end');
-  if (end && Temporal.Instant.compare(start, end) >= 0) throw new MessageError('end muss nach start liegen.', 'error.import.end');
+  if (end && Temporal.Instant.compare(start, end) >= 0) throw new MessageError('error.import.end');
   let url: string | null = null;
   if (row.url !== null && row.url !== undefined && row.url !== '') {
-    if (typeof row.url !== 'string' || row.url.length > 2048) throw new MessageError('URL ist ungueltig oder zu lang.', 'error.import.urlLength');
+    if (typeof row.url !== 'string' || row.url.length > 2048) throw new MessageError('error.import.urlLength');
     try {
       const parsed = new URL(row.url);
       if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error();
       url = row.url;
-    } catch { throw new MessageError('Nur HTTP/HTTPS-URLs sind erlaubt.', 'error.import.url'); }
+    } catch { throw new MessageError('error.import.url'); }
   }
   return { source: row.source as Activity['source'], id: row.id, start, end, title: row.title, url };
 }
 function parseInput(input: ImportInput): unknown[] {
-  if (typeof input.text !== 'string' || Buffer.byteLength(input.text, 'utf8') > IMPORT_MAX_BYTES) throw new MessageError('Importdatei ist groesser als 5 MB.', 'error.import.size');
+  if (typeof input.text !== 'string' || Buffer.byteLength(input.text, 'utf8') > IMPORT_MAX_BYTES) throw new MessageError('error.import.size');
   let rows: unknown[];
   if (input.format === 'json') {
     const parsed: unknown = JSON.parse(input.text);
-    if (!record(parsed) || parsed.schemaVersion !== 1 || !Array.isArray(parsed.activities)) throw new MessageError('JSON erwartet schemaVersion 1 und activities-Array.', 'error.import.jsonShape');
+    if (!record(parsed) || parsed.schemaVersion !== 1 || !Array.isArray(parsed.activities)) throw new MessageError('error.import.jsonShape');
     rows = parsed.activities;
   } else if (input.format === 'csv') {
     let headerSeen = false;
     const parsed = parse(input.text, { bom: true, columns: (head: string[]) => {
       headerSeen = true;
       if (head.length !== fields.length || fields.some((field, i) => head[i] !== field))
-        throw new MessageError(`CSV-Kopfzeile muss genau ${fields.join(',')} enthalten.`, 'error.import.csvHeader', { fields: fields.join(',') });
+        throw new MessageError('error.import.csvHeader', { fields: fields.join(',') });
       return head;
     }, skip_empty_lines: true, relax_quotes: false, relax_column_count: false, trim: false,
     on_record: (row, context) => {
       // Count parsed records, not physical lines, and stop before collecting the rest of the file.
-      if (context.records > maxRows) throw new MessageError('Hoestens 20.000 Datensaetze pro Import.', 'error.import.rows');
+      if (context.records > maxRows) throw new MessageError('error.import.rows');
       return row;
     } }) as Record<string, unknown>[];
-    if (!headerSeen) throw new MessageError('CSV-Kopfzeile fehlt.', 'error.import.csvMissingHeader');
+    if (!headerSeen) throw new MessageError('error.import.csvMissingHeader');
     rows = parsed;
-  } else throw new MessageError('Format muss json oder csv sein.', 'error.import.format');
-  if (rows.length > maxRows) throw new MessageError('Hoestens 20.000 Datensaetze pro Import.', 'error.import.rows');
+  } else throw new MessageError('error.import.format');
+  if (rows.length > maxRows) throw new MessageError('error.import.rows');
   return rows;
 }
 type ParsedImport = { analysis: ImportAnalysis; activities: Activity[]; duplicates: Partial<Record<Source, number>> };
@@ -85,7 +85,7 @@ function parsedImport(input: ImportInput): ParsedImport {
           duplicates[activity.source] = (duplicates[activity.source] ?? 0) + 1;
           return;
         }
-        throw new MessageError('Widerspruechlicher doppelter Schluessel in der Datei.', 'error.import.duplicate');
+        throw new MessageError('error.import.duplicate');
       }
       seen.set(key, activity);
       activities.push(activity);
@@ -113,7 +113,7 @@ export function previewImport(input: ImportInput, existing: Activity[], revision
   const sources = catalog ?? [...new Map(existing.map(a => [activityDataSourceId(a), { id: activityDataSourceId(a), type: a.source }])).values()];
   if (input.assignments !== undefined) {
     for (const [type, id] of Object.entries(input.assignments)) {
-      if (!sources.some(source => source.id === id && source.type === type)) preview.errors.push(serverProblem(`Ungueltiges Importziel fuer ${type}.`, 'error.import.targetInvalid', { source: type }));
+      if (!sources.some(source => source.id === id && source.type === type)) preview.errors.push(serverProblem('error.import.targetInvalid', { source: type }));
     }
   }
   const assignments = new Map<Source, string>();
@@ -121,14 +121,14 @@ export function previewImport(input: ImportInput, existing: Activity[], revision
     if (input.assignments !== undefined) {
       const id = input.assignments[source];
       if (!id || !sources.some(item => item.id === id && item.type === source)) {
-        preview.errors.push(serverProblem(`Importziel fuer ${source} fehlt, existiert nicht oder hat einen anderen Typ.`, 'error.import.targetMissing', { source }));
+        preview.errors.push(serverProblem('error.import.targetMissing', { source }));
         continue;
       }
       assignments.set(source, id);
     } else {
       const matches = sources.filter(item => item.type === source);
       if (matches.length > 1) {
-        preview.errors.push(serverProblem(`Mehrere Datenquellen fuer ${source}: Bitte ein Importziel waehlen.`, 'error.import.targetAmbiguous', { source }));
+        preview.errors.push(serverProblem('error.import.targetAmbiguous', { source }));
         continue;
       }
       assignments.set(source, matches[0]?.id ?? legacyDataSourceId(source));

@@ -166,7 +166,9 @@ import fields or calculations. New keys must exist in both languages with matchi
 placeholders. Keep saved review objects, confirmation keys and undo entries intact.
 
 The API adds `messageKey` and, where needed, `messageParams` for localized feedback.
-Existing message fields, status codes and business codes remain compatible.
+The legacy German `message` field is generated from the German entry in
+`shared/server-messages.ts`, so server code passes only the key and parameters.
+Status codes and business codes remain compatible.
 Translate visible errors from those identifiers rather than matching German text.
 Changing language must not remount drafts, replay mutations or weaken session and
 stale-response checks.

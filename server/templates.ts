@@ -23,10 +23,10 @@ export function registerTemplateRoutes(app: Express, db: DatabaseSync): void {
     const input = validReusable(b);
     const state = mutate(db, b, before => {
       const existing = before.templates.find(template => template.id === req.params.id);
-      if (!existing) throw new HttpError(404, 'Vorlage nicht gefunden.', 'error.template.notFound');
+      if (!existing) throw new HttpError(404, 'error.template.notFound');
       if (reusableKey(existing) === reusableKey(input)) return UNCHANGED;
       if (before.templates.some(template => template.id !== existing.id && reusableKey(template) === reusableKey(input)))
-        throw new HttpError(409, 'Vorlage existiert bereits.', 'error.template.duplicate', 'TEMPLATE_DUPLICATE');
+        throw new HttpError(409, 'error.template.duplicate', 'TEMPLATE_DUPLICATE');
       db.prepare('UPDATE templates SET title=?,note=?,duration_minutes=? WHERE id=?')
         .run(input.title, input.note, input.durationMinutes, existing.id);
     });
@@ -35,7 +35,7 @@ export function registerTemplateRoutes(app: Express, db: DatabaseSync): void {
   app.delete('/api/templates/:id', route((req, res) => {
     const b = body(req);
     const state = mutate(db, b, before => {
-      if (!before.templates.some(template => template.id === req.params.id)) throw new HttpError(404, 'Vorlage nicht gefunden.', 'error.template.notFound');
+      if (!before.templates.some(template => template.id === req.params.id)) throw new HttpError(404, 'error.template.notFound');
       db.prepare('DELETE FROM templates WHERE id=?').run(req.params.id as string);
     });
     res.json(state);

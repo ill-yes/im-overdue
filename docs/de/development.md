@@ -169,7 +169,9 @@ beide Sprachen mit gleichen Platzhaltern. Gespeicherte Prüfobjekte,
 Bestätigungsschlüssel und Rücknahmeeinträge bleiben unverändert.
 
 Die API ergänzt `messageKey` und bei Bedarf `messageParams` für übersetzte
-Rückmeldungen. Bestehende Meldungsfelder, Status- und Fachcodes bleiben kompatibel.
+Rückmeldungen. Das deutsche Legacy-Feld `message` entsteht aus dem deutschen
+Eintrag in `shared/server-messages.ts`; Servercode übergibt nur Schlüssel und
+Parameter. Status- und Fachcodes bleiben kompatibel.
 Übersetze sichtbare Fehler anhand dieser Kennungen statt durch Abgleich deutscher
 Texte. Sprachwechsel dürfen Entwürfe nicht neu aufbauen, Mutationen wiederholen
 oder Sitzungs- und Antwortschutz schwächen.

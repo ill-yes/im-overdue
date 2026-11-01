@@ -29,6 +29,8 @@ async function start() {
   });
 }
 
+const de = (key: keyof typeof serverMessages, params?: Record<string, string | number>) => translate(serverMessages, key, params, 'de');
+
 function problem(key: keyof typeof serverMessages, params?: Record<string, string | number>) {
   return { messageKey: key, ...(params ? { messageParams: params } : {}) };
 }
@@ -48,11 +50,11 @@ describe('stable API message descriptors', () => {
   it('adds metadata to validation, parser, unknown route and security responses without changing legacy fields', async () => {
     const request = await start();
     const cases = [
-      ['/api/import/preview', '{}', 400, 'format und text erforderlich.', problem('error.import.input')],
-      ['/api/import/preview', '{', 400, 'Ungueltiges JSON.', problem('error.http.jsonInvalid')],
-      ['/api/import/preview', '[]', 400, 'JSON-Objekt erwartet.', problem('error.http.jsonObject')],
-      ['/api/blocks', JSON.stringify({ start: 'missing' }), 400, 'start: UTC-Offset oder Z erforderlich.', problem('error.validation.offset', { field: 'start' })],
-      ['/api/unknown', undefined, 404, 'API-Endpunkt nicht gefunden.', problem('error.http.notFound')],
+      ['/api/import/preview', '{}', 400, de('error.import.input'), problem('error.import.input')],
+      ['/api/import/preview', '{', 400, de('error.http.jsonInvalid'), problem('error.http.jsonInvalid')],
+      ['/api/import/preview', '[]', 400, de('error.http.jsonObject'), problem('error.http.jsonObject')],
+      ['/api/blocks', JSON.stringify({ start: 'missing' }), 400, de('error.validation.offset', { field: 'start' }), problem('error.validation.offset', { field: 'start' })],
+      ['/api/unknown', undefined, 404, de('error.http.notFound'), problem('error.http.notFound')],
     ] as const;
     for (const [path, body, status, message, metadata] of cases) {
       const response = await request(path, body);
@@ -61,24 +63,24 @@ describe('stable API message descriptors', () => {
     }
     const wrongType = await request('/api/import/preview', '{}', { 'Content-Type': 'text/plain' });
     expect(wrongType.status).toBe(415);
-    expect(await wrongType.json()).toEqual({ message: 'JSON-Content-Type erforderlich.', ...problem('error.http.jsonType') });
+    expect(await wrongType.json()).toEqual({ message: de('error.http.jsonType'), ...problem('error.http.jsonType') });
     const security = await request('/api/state', undefined, { 'Sec-Fetch-Site': 'cross-site' });
     expect(security.status).toBe(403);
-    expect(await security.json()).toEqual({ message: 'Fremde Website ist nicht erlaubt.', ...problem('error.security.site') });
+    expect(await security.json()).toEqual({ message: de('error.security.site'), ...problem('error.security.site') });
   });
 
   it('retains conflict code and fields alongside metadata', async () => {
     const request = await start();
     const response = await request('/api/templates', JSON.stringify({ expectedRevision: 1, title: 'Example', note: '', durationMinutes: 60 }));
     expect(response.status).toBe(409);
-    expect(await response.json()).toEqual({ message: 'Ansicht ist veraltet. Bitte neu laden.', code: 'REVISION_CONFLICT', ...problem('error.revision.conflict') });
+    expect(await response.json()).toEqual({ message: de('error.revision.conflict'), code: 'REVISION_CONFLICT', ...problem('error.revision.conflict') });
   });
 
   it('describes intentional import problems at their source and keeps row numbers', () => {
     const base = { source: 'slack', id: 'example', start: '2026-10-01T09:00:00Z', end: null, title: 'Example', url: null };
     const json = (activities: unknown[]) => previewImport({ format: 'json', text: JSON.stringify({ schemaVersion: 1, activities }) }, [], 0);
     expect(json([{ ...base, start: '2026-10-01T09:00:00' }]).errors).toEqual([
-      { row: 1, message: 'start: Zeitstempel mit UTC-Offset oder Z erforderlich.', ...problem('error.import.timestampOffset', { field: 'start' }) },
+      { row: 1, message: de('error.import.timestampOffset', { field: 'start' }), ...problem('error.import.timestampOffset', { field: 'start' }) },
     ]);
     expect(json([base, { ...base, title: 'Changed' }]).errors[0]).toMatchObject(problem('error.import.duplicate'));
     expect(json([{ ...base, url: 'javascript:alert(1)' }]).errors[0]).toMatchObject(problem('error.import.url'));
@@ -110,7 +112,7 @@ describe('stable API message descriptors', () => {
       expect((await analysis.json()).errors).toEqual(errors);
       const commit = await request('/api/import/commit', JSON.stringify({ ...input, expectedRevision: 0 }));
       expect(commit.status).toBe(400);
-      expect(await commit.json()).toEqual({ message: `Import hat 1 Fehler: ${legacyMessage}`, ...problem('error.import.commit', { count: 1 }) });
+      expect(await commit.json()).toEqual({ message: `${de('error.import.commit', { count: 1 })} ${legacyMessage}`, ...problem('error.import.commit', { count: 1 }) });
     }
   });
 
@@ -121,35 +123,35 @@ describe('stable API message descriptors', () => {
       const errors = analyzeImport(input).errors;
       expect(errors).toEqual(previewImport(input, [], 0).errors);
       expect(errors[0]).toMatchObject({ row: activities.length, messageKey: activities.length === 1 ? 'error.import.url' : 'error.import.duplicate' });
-      expect(errors[0].message).toBe(activities.length === 1 ? 'Nur HTTP/HTTPS-URLs sind erlaubt.' : 'Widerspruechlicher doppelter Schluessel in der Datei.');
+      expect(errors[0].message).toBe(de(activities.length === 1 ? 'error.import.url' : 'error.import.duplicate'));
     }
     const input = { format: 'json' as const, text: JSON.stringify({ schemaVersion: 1, activities: [row] }) };
     const catalog = [{ id: 'first', type: 'slack' as const }, { id: 'second', type: 'slack' as const }];
-    expect(previewImport(input, [], 0, catalog).errors).toEqual([{ message: 'Mehrere Datenquellen fuer slack: Bitte ein Importziel waehlen.', ...problem('error.import.targetAmbiguous', { source: 'slack' }) }]);
-    expect(previewImport({ ...input, assignments: {} }, [], 0, catalog).errors).toEqual([{ message: 'Importziel fuer slack fehlt, existiert nicht oder hat einen anderen Typ.', ...problem('error.import.targetMissing', { source: 'slack' }) }]);
+    expect(previewImport(input, [], 0, catalog).errors).toEqual([{ message: de('error.import.targetAmbiguous', { source: 'slack' }), ...problem('error.import.targetAmbiguous', { source: 'slack' }) }]);
+    expect(previewImport({ ...input, assignments: {} }, [], 0, catalog).errors).toEqual([{ message: de('error.import.targetMissing', { source: 'slack' }), ...problem('error.import.targetMissing', { source: 'slack' }) }]);
     expect(previewImport({ ...input, assignments: { slack: 'missing' } }, [], 0, catalog).errors).toEqual([
-      { message: 'Ungueltiges Importziel fuer slack.', ...problem('error.import.targetInvalid', { source: 'slack' }) },
-      { message: 'Importziel fuer slack fehlt, existiert nicht oder hat einen anderen Typ.', ...problem('error.import.targetMissing', { source: 'slack' }) },
+      { message: de('error.import.targetInvalid', { source: 'slack' }), ...problem('error.import.targetInvalid', { source: 'slack' }) },
+      { message: de('error.import.targetMissing', { source: 'slack' }), ...problem('error.import.targetMissing', { source: 'slack' }) },
     ]);
   });
 
   it('adds descriptors to source, package and import-envelope errors while retaining legacy German messages', async () => {
     const request = await start();
     const cases = [
-      ['/api/data-sources/missing/activities', undefined, 404, 'Datenquelle nicht gefunden.', 'error.dataSource.notFound'],
-      ['/api/import-packages/missing', undefined, 404, 'Importpaket nicht gefunden.', 'error.importPackage.notFound'],
-      ['/api/data-sources/missing/activities?unknown=1', undefined, 400, 'Unbekannter Abfrageparameter.', 'error.dataSource.query'],
-      ['/api/data-sources/missing/packages?page=-1', undefined, 400, 'page muss eine nichtnegative ganze Zahl sein.', 'error.dataSource.page'],
-      ['/api/import-packages/missing?page=9007199254740991', undefined, 400, 'page ist zu gross.', 'error.dataSource.pageSize'],
-      ['/api/import-packages/missing?q=' + 'a'.repeat(501), undefined, 400, 'q muss Text mit maximal 500 Zeichen sein.', 'error.dataSource.search'],
-      ['/api/data-sources', JSON.stringify({ type: 'invalid', name: 'Untouched user name', expectedRevision: 0 }), 400, 'Unbekannter Quellentyp.', 'error.dataSource.type'],
-      ['/api/import/analyze', JSON.stringify({ format: 'json', text: '{}', assignments: [] }), 400, 'assignments muss ein Objekt sein.', 'error.import.assignmentsObject'],
-      ['/api/import/preview', JSON.stringify({ format: 'json', text: '{}', assignments: { invalid: 'source' } }), 400, 'Ungueltige Importzuordnung.', 'error.import.assignments'],
+      ['/api/data-sources/missing/activities', undefined, 404, 'error.dataSource.notFound'],
+      ['/api/import-packages/missing', undefined, 404, 'error.importPackage.notFound'],
+      ['/api/data-sources/missing/activities?unknown=1', undefined, 400, 'error.dataSource.query'],
+      ['/api/data-sources/missing/packages?page=-1', undefined, 400, 'error.dataSource.page'],
+      ['/api/import-packages/missing?page=9007199254740991', undefined, 400, 'error.dataSource.pageSize'],
+      ['/api/import-packages/missing?q=' + 'a'.repeat(501), undefined, 400, 'error.dataSource.search'],
+      ['/api/data-sources', JSON.stringify({ type: 'invalid', name: 'Untouched user name', expectedRevision: 0 }), 400, 'error.dataSource.type'],
+      ['/api/import/analyze', JSON.stringify({ format: 'json', text: '{}', assignments: [] }), 400, 'error.import.assignmentsObject'],
+      ['/api/import/preview', JSON.stringify({ format: 'json', text: '{}', assignments: { invalid: 'source' } }), 400, 'error.import.assignments'],
     ] as const;
-    for (const [path, body, status, message, messageKey] of cases) {
+    for (const [path, body, status, messageKey] of cases) {
       const response = await request(path, body);
       expect(response.status).toBe(status);
-      expect(await response.json()).toEqual({ message, ...problem(messageKey) });
+      expect(await response.json()).toEqual({ message: de(messageKey), ...problem(messageKey) });
       expect(translate(serverMessages, messageKey, {}, 'en')).not.toBe('');
       expect(translate(serverMessages, messageKey, {}, 'de')).not.toBe('');
     }

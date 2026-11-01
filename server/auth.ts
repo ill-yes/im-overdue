@@ -48,17 +48,17 @@ export async function createAuthentication(password: string | undefined, origin?
     attempts = attempts.filter(attempt => attempt > at - ATTEMPT_WINDOW_MS);
     if (attempts.length >= 10) {
       res.setHeader('Retry-After', Math.max(1, Math.ceil((attempts[0] + ATTEMPT_WINDOW_MS - at) / 1000)));
-      throw new HttpError(429, 'Zu viele Anmeldeversuche. Bitte spaeter erneut versuchen.', 'error.auth.limited', 'LOGIN_LIMITED');
+      throw new HttpError(429, 'error.auth.limited', 'LOGIN_LIMITED');
     }
     attempts.push(at);
-    if (verifying) { res.setHeader('Retry-After', '1'); throw new HttpError(429, 'Anmeldung wird bereits geprueft.', 'error.auth.busy', 'LOGIN_LIMITED'); }
+    if (verifying) { res.setHeader('Retry-After', '1'); throw new HttpError(429, 'error.auth.busy', 'LOGIN_LIMITED'); }
     const input = body(req);
-    if (!validPassword(input.password)) throw new HttpError(401, 'Passwort ist nicht korrekt.', 'error.auth.invalid', 'LOGIN_INVALID');
+    if (!validPassword(input.password)) throw new HttpError(401, 'error.auth.invalid', 'LOGIN_INVALID');
     verifying = true;
     let matches: boolean;
     try { matches = timingSafeEqual(await derive(input.password, salt!, 64) as Buffer, reference!); }
     finally { verifying = false; }
-    if (!matches) throw new HttpError(401, 'Passwort ist nicht korrekt.', 'error.auth.invalid', 'LOGIN_INVALID');
+    if (!matches) throw new HttpError(401, 'error.auth.invalid', 'LOGIN_INVALID');
     prune();
     if (sessions.size >= 64) sessions.delete(sessions.keys().next().value!);
     const token = randomBytes(32).toString('hex');
@@ -73,7 +73,7 @@ export async function createAuthentication(password: string | undefined, origin?
     res.status(204).end();
   });
   const requireSession: RequestHandler = (req, res, next) => {
-    if (!authenticated(req)) { res.status(401).json({ code: 'AUTH_REQUIRED', ...serverProblem('Bitte anmelden.', 'error.auth.required') }); return; }
+    if (!authenticated(req)) { res.status(401).json({ code: 'AUTH_REQUIRED', ...serverProblem('error.auth.required') }); return; }
     next();
   };
   return { routes, requireSession };

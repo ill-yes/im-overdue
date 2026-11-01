@@ -37,7 +37,7 @@ export function registerBlockRoutes(app: Express, db: DatabaseSync): void {
       revision(db, b);
       const old = readState(db);
       const before = old.blocks.find(x => x.id === req.params.id);
-      if (!before) throw new HttpError(404, 'Arbeitsblock nicht gefunden.', 'error.block.notFound');
+      if (!before) throw new HttpError(404, 'error.block.notFound');
       const title = input.title ?? before.title;
       const reusable = input.rememberTemplate ? reusableForBlock(input, title) : null;
       if (Temporal.Instant.compare(input.start, before.start) === 0 && Temporal.Instant.compare(input.end, before.end) === 0 &&
@@ -68,7 +68,7 @@ export function registerBlockRoutes(app: Express, db: DatabaseSync): void {
     const b = body(req);
     const state = mutate(db, b, old => {
       const before = old.blocks.find(x => x.id === req.params.id);
-      if (!before) throw new HttpError(404, 'Arbeitsblock nicht gefunden.', 'error.block.notFound');
+      if (!before) throw new HttpError(404, 'error.block.notFound');
       const weeks = weekKeys(before, old.settings.timezone);
       reopen(db, checkReopen(old, weeks, bool(b.confirmReopen, 'confirmReopen')));
       db.prepare('DELETE FROM blocks WHERE id=?').run(before.id);
@@ -78,12 +78,12 @@ export function registerBlockRoutes(app: Express, db: DatabaseSync): void {
   }));
   app.post('/api/blocks/undo', route((req, res) => {
     const b = body(req);
-    if (typeof b.token !== 'string' || !b.token) throw bad('Undo-Token fehlt.', 'error.undo.token');
+    if (typeof b.token !== 'string' || !b.token) throw bad('error.undo.token');
     const state = transaction(db, () => {
       revision(db, b);
       const entry = readUndo(db);
-      if (!entry || entry.token !== b.token) throw new HttpError(409, 'Rückgängig ist nicht mehr verfügbar.', 'error.undo.unavailable', 'UNDO_CONFLICT');
-      if (!applyBlockUndo(db, readState(db), entry)) throw new HttpError(409, 'Der gespeicherte Stand hat sich geändert.', 'error.undo.changed', 'UNDO_CONFLICT');
+      if (!entry || entry.token !== b.token) throw new HttpError(409, 'error.undo.unavailable', 'UNDO_CONFLICT');
+      if (!applyBlockUndo(db, readState(db), entry)) throw new HttpError(409, 'error.undo.changed', 'UNDO_CONFLICT');
       clearUndo(db);
       bumpRevision(db);
       return readState(db);

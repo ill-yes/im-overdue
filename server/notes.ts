@@ -10,9 +10,9 @@ export function registerNoteRoutes(app: Express, db: DatabaseSync): void {
   app.put('/api/notes/:scope/:date', route((req, res) => {
     const b = body(req);
     const scope = req.params.scope;
-    if (scope !== 'day' && scope !== 'week') throw bad('Notizbereich muss day oder week sein.', 'error.note.scope');
+    if (scope !== 'day' && scope !== 'week') throw bad('error.note.scope');
     const date = scope === 'week' ? monday(req.params.date) : validDate(req.params.date);
-    if (typeof b.text !== 'string' || b.text.length > NOTE_MAX_LENGTH) throw bad(`Notiz muss Text mit maximal ${NOTE_MAX_LENGTH} Zeichen sein.`, 'error.validation.note', { max: NOTE_MAX_LENGTH });
+    if (typeof b.text !== 'string' || b.text.length > NOTE_MAX_LENGTH) throw bad('error.validation.note', { max: NOTE_MAX_LENGTH });
     const text = b.text;
     const state = mutate(db, b, before => {
       const previous = noteText(before.notes, scope, date);

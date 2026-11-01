@@ -11,32 +11,32 @@ import { checkReopen, mutate, reopen, revision, UNCHANGED } from './state-change
 import { clearUndo, saveAbsenceUndo } from './undo.js';
 
 function minutes(value: unknown): number {
-  if (!Number.isInteger(value) || Math.abs(Number(value)) > 1e9) throw bad('Ungültige Minuten.', 'error.account.minutes');
+  if (!Number.isInteger(value) || Math.abs(Number(value)) > 1e9) throw bad('error.account.minutes');
   return value as number;
 }
 function entryInput(b: Record<string, unknown>): AccountEntryInput {
   const date = validDate(b.date), amount = minutes(b.minutes);
-  if (amount === 0) throw bad('Kontobuchungen benötigen eine Dauer ungleich null.', 'error.account.zero');
-  if ((b.kind !== 'payout' && b.kind !== 'correction') || (b.kind === 'payout' && amount >= 0)) throw bad('Ungültige Buchungsart.', 'error.account.kind');
-  if (typeof b.reason !== 'string' || !b.reason.trim() || b.reason.trim().length > 500) throw bad('Ungültige Begründung.', 'error.account.reason');
+  if (amount === 0) throw bad('error.account.zero');
+  if ((b.kind !== 'payout' && b.kind !== 'correction') || (b.kind === 'payout' && amount >= 0)) throw bad('error.account.kind');
+  if (typeof b.reason !== 'string' || !b.reason.trim() || b.reason.trim().length > 500) throw bad('error.account.reason');
   return { date, minutes: amount, kind: b.kind, reason: b.reason.trim() };
 }
 function absenceInput(value: unknown): AbsenceChange[] {
-  if (!Array.isArray(value) || !value.length || value.length > 366) throw bad('Ungültiger Abwesenheitsbereich.', 'error.absence.days');
+  if (!Array.isArray(value) || !value.length || value.length > 366) throw bad('error.absence.days');
   const dates = new Set<string>();
   const days = value.map(item => {
-    if (!item || typeof item !== 'object' || Array.isArray(item)) throw bad('Ungültige Abwesenheit.', 'error.absence.value');
+    if (!item || typeof item !== 'object' || Array.isArray(item)) throw bad('error.absence.value');
     const date = validDate(item.date);
-    if (dates.has(date)) throw bad('Doppelte Abwesenheit.', 'error.absence.days');
+    if (dates.has(date)) throw bad('error.absence.days');
     dates.add(date);
-    if (typeof item.sickness !== 'boolean' || ![0, 0.5, 1].includes(item.vacationFraction)) throw bad('Ungültige Abwesenheit.', 'error.absence.value');
+    if (typeof item.sickness !== 'boolean' || ![0, 0.5, 1].includes(item.vacationFraction)) throw bad('error.absence.value');
     const c = item.compensation;
     if (c !== null && (!c || typeof c !== 'object' || Array.isArray(c) ||
       !(c.mode === 'fraction' && (c.value === 0.5 || c.value === 1) || c.mode === 'minutes' && Number.isInteger(c.value) && c.value > 0 && c.value <= 10080)))
-      throw bad('Ungültiger Freizeitausgleich.', 'error.absence.value');
+      throw bad('error.absence.value');
     return { date, sickness: item.sickness, vacationFraction: item.vacationFraction, compensation: c === null ? null : { mode: c.mode, value: c.value } } as AbsenceChange;
   }).sort((a, b) => a.date.localeCompare(b.date));
-  if (Temporal.PlainDate.from(days[0].date).until(Temporal.PlainDate.from(days[days.length - 1].date)).days >= 366) throw bad('Ungültiger Abwesenheitsbereich.', 'error.absence.days');
+  if (Temporal.PlainDate.from(days[0].date).until(Temporal.PlainDate.from(days[days.length - 1].date)).days >= 366) throw bad('error.absence.days');
   return days;
 }
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
@@ -62,9 +62,9 @@ export function registerAccountingRoutes(app: Express, db: DatabaseSync): void {
     const b = body(req), input = entryInput(b);
     res.json(mutate(db, b, before => {
       const existing = method === 'put' ? before.accountEntries?.find(item => item.id === req.params.id) : undefined;
-      if (method === 'put' && !existing) throw new HttpError(404, 'Buchung nicht gefunden.', 'error.account.notFound');
+      if (method === 'put' && !existing) throw new HttpError(404, 'error.account.notFound');
       if (existing && same(entryInput(existing as unknown as Record<string, unknown>), input)) return UNCHANGED;
-      if (!before.accountOpening || input.date < before.accountOpening.date) throw bad('Buchung liegt vor dem Anfangssaldo.', 'error.account.opening');
+      if (!before.accountOpening || input.date < before.accountOpening.date) throw bad('error.account.opening');
       db.prepare('INSERT INTO account_entries(id,date,kind,minutes,reason) VALUES (?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET date=excluded.date,kind=excluded.kind,minutes=excluded.minutes,reason=excluded.reason')
         .run(existing?.id ?? randomUUID(), input.date, input.kind, input.minutes, input.reason);
     }));
@@ -72,7 +72,7 @@ export function registerAccountingRoutes(app: Express, db: DatabaseSync): void {
   app.delete('/api/account/entries/:id', route((req, res) => {
     const b = body(req);
     res.json(mutate(db, b, before => {
-      if (!before.accountEntries?.some(item => item.id === req.params.id)) throw new HttpError(404, 'Buchung nicht gefunden.', 'error.account.notFound');
+      if (!before.accountEntries?.some(item => item.id === req.params.id)) throw new HttpError(404, 'error.account.notFound');
       db.prepare('DELETE FROM account_entries WHERE id=?').run(req.params.id as string);
     }));
   }));
@@ -88,7 +88,7 @@ export function registerAccountingRoutes(app: Express, db: DatabaseSync): void {
         if (same(prior, day)) return false;
         if (targetForDay(day.date, before.profiles) === 0 && (
           day.vacationFraction > prior.vacationFraction || day.sickness && !prior.sickness || day.compensation !== null && !same(day.compensation, prior.compensation)))
-          throw bad('Abwesenheit benötigt positives Soll.', 'error.absence.target');
+          throw bad('error.absence.target');
         return true;
       });
       if (!changes.length) return before;
@@ -107,8 +107,8 @@ export function registerAccountingRoutes(app: Express, db: DatabaseSync): void {
   }));
   app.post('/api/holiday-profiles', route((req, res) => {
     const b = body(req), effectiveFrom = validDate(b.effectiveFrom), confirmed = bool(b.confirmReopen, 'confirmReopen');
-    if (b.region !== null && !GERMAN_STATES.includes(b.region as never)) throw bad('Ungültiges Bundesland.', 'error.holiday.region');
-    if (b.ruleVersion !== undefined && b.ruleVersion !== 1) throw bad('Ungültige Feiertagsregel.', 'error.holiday.region');
+    if (b.region !== null && !GERMAN_STATES.includes(b.region as never)) throw bad('error.holiday.region');
+    if (b.ruleVersion !== undefined && b.ruleVersion !== 1) throw bad('error.holiday.region');
     res.json(mutate(db, b, before => {
       const existing = before.holidayProfiles?.find(profile => profile.effectiveFrom === effectiveFrom);
       if (existing && existing.region === b.region) return UNCHANGED;
@@ -121,7 +121,7 @@ export function registerAccountingRoutes(app: Express, db: DatabaseSync): void {
   app.delete('/api/holiday-profiles/:id', route((req, res) => {
     const b = body(req), confirmed = bool(b.confirmReopen, 'confirmReopen');
     res.json(mutate(db, b, before => {
-      if (!before.holidayProfiles?.some(profile => profile.id === req.params.id)) throw new HttpError(404, 'Feiertagsprofil nicht gefunden.', 'error.holiday.notFound');
+      if (!before.holidayProfiles?.some(profile => profile.id === req.params.id)) throw new HttpError(404, 'error.holiday.notFound');
       const after = { ...before, holidayProfiles: before.holidayProfiles.filter(profile => profile.id !== req.params.id) };
       reopen(db, checkReopen(before, holidayWeeks(before, after), confirmed));
       db.prepare('DELETE FROM holiday_profiles WHERE id=?').run(req.params.id as string);
@@ -129,7 +129,7 @@ export function registerAccountingRoutes(app: Express, db: DatabaseSync): void {
   }));
   for (const method of ['put', 'delete'] as const) app[method]('/api/holiday-overrides/:date', route((req, res) => {
     const b = body(req), date = validDate(req.params.date), confirmed = bool(b.confirmReopen, 'confirmReopen');
-    if (method === 'put' && b.name !== null && (typeof b.name !== 'string' || !b.name.trim() || b.name.trim().length > 160)) throw bad('Ungültiger Feiertagsname.', 'error.holiday.name');
+    if (method === 'put' && b.name !== null && (typeof b.name !== 'string' || !b.name.trim() || b.name.trim().length > 160)) throw bad('error.holiday.name');
     const name = typeof b.name === 'string' ? b.name.trim() : null;
     res.json(mutate(db, b, before => {
       const existing = before.holidayOverrides?.find(item => item.date === date);

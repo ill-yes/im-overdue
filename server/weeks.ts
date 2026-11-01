@@ -15,21 +15,21 @@ export function registerWeekRoutes(app: Express, db: DatabaseSync): void {
   app.post('/api/weeks/:weekStart', route((req, res) => {
     const b = body(req);
     const week = monday(req.params.weekStart);
-    if (!['open', 'closed'].includes(String(b.status))) throw bad('status muss open oder closed sein.', 'error.week.status');
+    if (!['open', 'closed'].includes(String(b.status))) throw bad('error.week.status');
     const confirmWarnings = bool(b.confirmWarnings, 'confirmWarnings');
     if (b.reviewKey !== undefined && (typeof b.reviewKey !== 'string' || !b.reviewKey.length || b.reviewKey.length > 20_000))
-      throw bad('reviewKey muss Text mit 1 bis 20000 Zeichen sein.', 'error.week.reviewKey');
+      throw bad('error.week.reviewKey');
     const state = mutate(db, b, old => {
       if (b.status === 'closed') {
         const review = weekReview(old, week);
         if (b.reviewKey !== undefined && b.reviewKey !== weekReviewKey(review))
-          throw new HttpError(409, 'Die Wochenpruefung hat sich geaendert. Bitte erneut pruefen.', 'error.week.reviewChanged', 'WEEK_REVIEW_REQUIRED', undefined, review);
+          throw new HttpError(409, 'error.week.reviewChanged', 'WEEK_REVIEW_REQUIRED', undefined, review);
         const current = weekStartFor(review.today);
-        if (week > current) throw bad('Zukuenftige Wochen koennen nicht abgeschlossen werden.', 'error.week.future');
+        if (week > current) throw bad('error.week.future');
         if (week === current && !bool(b.confirmCurrent, 'confirmCurrent'))
-          throw new HttpError(409, 'Laufende Woche mit vollem Soll abschliessen?', 'error.week.current', 'CURRENT_WEEK_CONFIRM_REQUIRED');
+          throw new HttpError(409, 'error.week.current', 'CURRENT_WEEK_CONFIRM_REQUIRED');
         if (review.warnings.length && !confirmWarnings)
-          throw new HttpError(409, 'Bitte Hinweise vor dem Wochenabschluss bestaetigen.', 'error.week.warnings', 'WEEK_REVIEW_REQUIRED', undefined, review);
+          throw new HttpError(409, 'error.week.warnings', 'WEEK_REVIEW_REQUIRED', undefined, review);
       }
       db.prepare('INSERT INTO weeks(week_start,status) VALUES (?,?) ON CONFLICT(week_start) DO UPDATE SET status=excluded.status').run(week, b.status as string);
     });

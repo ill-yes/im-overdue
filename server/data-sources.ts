@@ -22,13 +22,13 @@ function packageFromRow(row: PackageRow): ImportPackage {
 }
 
 function pageQuery(req: Request): { page: number; q: string } {
-  if (Object.keys(req.query).some(key => key !== 'page' && key !== 'q')) throw bad('Unbekannter Abfrageparameter.', 'error.dataSource.query');
+  if (Object.keys(req.query).some(key => key !== 'page' && key !== 'q')) throw bad('error.dataSource.query');
   const raw = req.query.page;
-  if (raw !== undefined && (typeof raw !== 'string' || !/^(0|[1-9][0-9]*)$/.test(raw))) throw bad('page muss eine nichtnegative ganze Zahl sein.', 'error.dataSource.page');
+  if (raw !== undefined && (typeof raw !== 'string' || !/^(0|[1-9][0-9]*)$/.test(raw))) throw bad('error.dataSource.page');
   const page = raw === undefined ? 0 : Number(raw);
-  if (!Number.isSafeInteger(page) || page > Math.floor(Number.MAX_SAFE_INTEGER / pageSize)) throw bad('page ist zu gross.', 'error.dataSource.pageSize');
+  if (!Number.isSafeInteger(page) || page > Math.floor(Number.MAX_SAFE_INTEGER / pageSize)) throw bad('error.dataSource.pageSize');
   const q = req.query.q === undefined ? '' : req.query.q;
-  if (typeof q !== 'string' || q.length > 500) throw bad('q muss Text mit maximal 500 Zeichen sein.', 'error.dataSource.search');
+  if (typeof q !== 'string' || q.length > 500) throw bad('error.dataSource.search');
   return { page, q: q.trim() };
 }
 
@@ -40,12 +40,12 @@ function readPage<T>(db: DatabaseSync, table: string, columns: string, where: st
 
 function requireSource(db: DatabaseSync, id: string): { id: string; type: Source; name: string } {
   const source = db.prepare('SELECT id,type,name FROM data_sources WHERE id=?').get(id) as { id: string; type: Source; name: string } | undefined;
-  if (!source) throw new HttpError(404, 'Datenquelle nicht gefunden.', 'error.dataSource.notFound');
+  if (!source) throw new HttpError(404, 'error.dataSource.notFound');
   return source;
 }
 
 function sourceName(value: unknown): string {
-  if (typeof value !== 'string' || !value.trim() || value.trim().length > 160) throw bad('Name muss 1 bis 160 Zeichen enthalten.', 'error.validation.nameLength');
+  if (typeof value !== 'string' || !value.trim() || value.trim().length > 160) throw bad('error.validation.nameLength');
   return value.trim();
 }
 
@@ -53,7 +53,7 @@ export function registerDataSourceRoutes(app: Express, db: DatabaseSync): void {
   app.post('/api/data-sources', route((req, res) => {
     const b = body(req);
     const name = sourceName(b.name);
-    if (!SOURCES.includes(b.type as Source)) throw bad('Unbekannter Quellentyp.', 'error.dataSource.type');
+    if (!SOURCES.includes(b.type as Source)) throw bad('error.dataSource.type');
     res.json(mutate(db, b, () => {
       db.prepare('INSERT INTO data_sources(id,type,name) VALUES (?,?,?)').run(randomUUID(), b.type as Source, name);
     }));
@@ -63,7 +63,7 @@ export function registerDataSourceRoutes(app: Express, db: DatabaseSync): void {
     const name = sourceName(b.name);
     res.json(mutate(db, b, () => {
       const source = requireSource(db, req.params.id as string);
-      if (b.type !== undefined && b.type !== source.type) throw bad('Der Quellentyp ist unveraenderlich.', 'error.dataSource.typeImmutable');
+      if (b.type !== undefined && b.type !== source.type) throw bad('error.dataSource.typeImmutable');
       if (source.name === name) return UNCHANGED;
       db.prepare('UPDATE data_sources SET name=? WHERE id=?').run(name, source.id);
     }));
@@ -92,7 +92,7 @@ export function registerDataSourceRoutes(app: Express, db: DatabaseSync): void {
   app.get('/api/import-packages/:id', route((req, res) => {
     const { page, q } = pageQuery(req);
     const row = db.prepare(`SELECT ${packageColumns} FROM import_packages WHERE id=?`).get(req.params.id as string) as PackageRow | undefined;
-    if (!row) throw new HttpError(404, 'Importpaket nicht gefunden.', 'error.importPackage.notFound');
+    if (!row) throw new HttpError(404, 'error.importPackage.notFound');
     const item = packageFromRow(row);
     const result = readPage<Omit<Activity, 'dataSourceId'>>(db, 'import_package_rows', activityColumns,
       'package_id=? AND (?=\'\' OR instr(search_fold(title),search_fold(?))>0 OR instr(search_fold(id),search_fold(?))>0 OR instr(search_fold(url),search_fold(?))>0)',
@@ -105,7 +105,12 @@ export function registerDataSourceRoutes(app: Express, db: DatabaseSync): void {
 export function commitImport(db: DatabaseSync, input: ImportInput): ReturnType<typeof readState> {
   const old = readState(db);
   const preview = previewImport(input, old.activities, old.revision, old.dataSources);
-  if (preview.errors.length) throw bad(`Import hat ${preview.errors.length} Fehler: ${preview.errors[0].message}`, 'error.import.commit', { count: preview.errors.length });
+  if (preview.errors.length) {
+    const error = bad('error.import.commit', { count: preview.errors.length });
+    // The legacy message keeps the first diagnostic, for example a parser position.
+    error.message += ` ${preview.errors[0].message}`;
+    throw error;
+  }
   const changed = preview.rows.filter(row => row.status !== 'unchanged');
   if (!changed.length) return old;
   const duplicates = importDuplicates(input);

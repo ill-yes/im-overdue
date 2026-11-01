@@ -35,13 +35,13 @@ export function requestSecurity(origin?: string): RequestHandler {
   const localProbe = req.path === '/api/health' && ['GET', 'HEAD'].includes(req.method)
     && ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress ?? '') && hostAllowed(req);
   if (!(expectedHost ? req.headers.host === expectedHost || localProbe : hostAllowed(req))) {
-    res.status(403).json(serverProblem('Host ist nicht erlaubt.', 'error.security.host')); return;
+    res.status(403).json(serverProblem('error.security.host')); return;
   }
   if (req.headers['sec-fetch-site'] === 'cross-site') {
-    res.status(403).json(serverProblem('Fremde Website ist nicht erlaubt.', 'error.security.site')); return;
+    res.status(403).json(serverProblem('error.security.site')); return;
   }
   if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && !(origin ? req.headers.origin === origin : originAllowed(req))) {
-    res.status(403).json(serverProblem('Origin stimmt nicht mit dem lokalen Server ueberein.', 'error.security.origin')); return;
+    res.status(403).json(serverProblem('error.security.origin')); return;
   }
   next();
   };

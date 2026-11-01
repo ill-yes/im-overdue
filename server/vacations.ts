@@ -19,7 +19,7 @@ export function registerVacationRoutes(app: Express, db: DatabaseSync): void {
       const before = readState(db);
       const existing = new Map(before.vacations.map(day => [day.date, day.fraction]));
       for (const day of days) {
-        if (day.fraction !== null && existing.get(day.date) !== day.fraction && targetForDay(day.date, before.profiles) === 0) throw bad('Urlaub ist nur an Tagen mit positivem Soll moeglich.', 'error.vacation.target');
+        if (day.fraction !== null && existing.get(day.date) !== day.fraction && targetForDay(day.date, before.profiles) === 0) throw bad('error.vacation.target');
       }
       const changes = days.filter(day => (existing.get(day.date) ?? null) !== day.fraction);
       if (!changes.length) return before;
@@ -37,7 +37,7 @@ export function registerVacationRoutes(app: Express, db: DatabaseSync): void {
   }));
   app.put('/api/vacation-allowances/:year', route((req, res) => {
     const b = body(req);
-    if (typeof req.params.year !== 'string' || !/^[0-9]{4}$/.test(req.params.year) || Number(req.params.year) < 1) throw bad('Ungueltiges Urlaubsjahr.', 'error.vacation.year');
+    if (typeof req.params.year !== 'string' || !/^[0-9]{4}$/.test(req.params.year) || Number(req.params.year) < 1) throw bad('error.vacation.year');
     const year = Number(req.params.year);
     const entitlementDays = allowanceDays(b.entitlementDays);
     const carryoverDays = allowanceDays(b.carryoverDays);
