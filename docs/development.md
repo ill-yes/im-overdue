@@ -59,9 +59,9 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-`npm run lint` runs ESLint with TypeScript and React hook rules. Errors fail CI;
-hook dependency warnings are shown for review because some effects run on
-purpose only for selected changes.
+`npm run lint` runs ESLint with TypeScript and React hook rules and fails on any
+warning. Where an effect deliberately reacts to fewer dependencies, a
+`react-hooks/exhaustive-deps` exception states the reason inline.
 
 The browser suite runs against the built app. Tests use temporary isolated
 databases, not `data/im-overdue.sqlite`. Browser reports and screenshots go to

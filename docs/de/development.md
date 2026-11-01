@@ -59,9 +59,10 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-`npm run lint` führt ESLint mit TypeScript- und React-Hook-Regeln aus. Fehler
-lassen die CI scheitern; Warnungen zu Hook-Abhängigkeiten dienen der Prüfung,
-weil manche Effekte bewusst nur auf ausgewählte Änderungen reagieren.
+`npm run lint` führt ESLint mit TypeScript- und React-Hook-Regeln aus und
+scheitert schon bei Warnungen. Reagiert ein Effekt bewusst auf weniger
+Abhängigkeiten, begründet eine `react-hooks/exhaustive-deps`-Ausnahme das direkt
+im Code.
 
 Die Browser-Suite prüft die gebaute App. Tests nutzen isolierte temporäre
 Datenbanken und nicht `data/im-overdue.sqlite`. Browserberichte und Screenshots
