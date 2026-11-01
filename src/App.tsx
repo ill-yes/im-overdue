@@ -182,7 +182,7 @@ export default function App() {
     });
   };
   useEffect(() => {
-    if (view !== 'week' || editorOpen) replaceQuickCreate(null);
+    if (view !== 'week' || editor) replaceQuickCreate(null);
   }, [view, editor, replaceQuickCreate]);
 
   const closed = state?.weeks.some((w) => w.weekStart === week && w.status === 'closed') ?? false;

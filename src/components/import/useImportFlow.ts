@@ -135,7 +135,7 @@ export function useImportFlow({
     setPreviewZone(timezone);
   }, [timezone, previewZone, step, committing]);
 
-  const rows = preview?.rows ?? [];
+  const rows = useMemo(() => preview?.rows ?? [], [preview]);
   const period = useMemo(
     () => periodOf(rows, step === 'result' ? timezone : previewZone),
     [rows, previewZone, timezone, step],
