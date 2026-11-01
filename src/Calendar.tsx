@@ -113,6 +113,7 @@ export function Calendar({
   const [showSmallGaps, setShowSmallGaps] = useState(false);
   const [localError, setLocalError] = useState<TextValue>('');
   const weekDays = useMemo(() => calendarWeekDays(dates, state, enabledSources),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the state slices the week model reads and on the enabled-source key.
     [dates, zone, state.activities, state.blocks, state.profiles, state.vacations, state.absences, state.holidayProfiles, state.holidayOverrides, enabledKey]);
   // Measure the metadata itself, then reserve the same row in every sticky heading.
   // This keeps the timeline aligned even when holiday names wrap at narrow widths.
@@ -156,6 +157,7 @@ export function Calendar({
       if (activityFocus?.date !== focusDate) heading.focus({ preventScroll: true });
       scroll.scrollIntoView({ block: 'nearest' });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- scroll to a day only when the focus date or week changes.
   }, [focusDate, dates, activityFocus?.date]);
   useEffect(() => {
     if (!active || !activityFocus || !dates.includes(activityFocus.date)) return;
@@ -173,6 +175,7 @@ export function Calendar({
     scroll.scrollTop = Math.max(0, markerTop - Math.min(170, scroll.clientHeight / 3));
     marker.focus({ preventScroll: true });
     scroll.scrollIntoView({ block: 'nearest' });
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- refocus only for a new activity focus request.
   }, [activityFocus?.date, activityFocus?.source, activityFocus?.dataSourceId, activityFocus?.id, activityFocus?.requestId, dates]);
   useEffect(() => {
     if (!detail) return;
@@ -205,6 +208,7 @@ export function Calendar({
     };
     window.addEventListener('keydown', cancel);
     return () => window.removeEventListener('keydown', cancel);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the Escape listener is installed once and reads drafts through refs.
   }, []);
 
   function beginDraft(next: Draft, element: HTMLElement, event: ReactPointerEvent) {

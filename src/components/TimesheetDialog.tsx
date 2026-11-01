@@ -90,6 +90,7 @@ export function TimesheetDialog({ anchor, initialKind = 'month', preset, onLoad,
       if (active && generation.current === id) setResult({ selection, error: errorText(error, m('loadError')) });
     });
     return () => { active = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- a language switch must not reload the snapshot.
   }, [selection]);
   const snapshot = result?.selection === selection ? result.snapshot : undefined;
   const error = result?.selection === selection ? result.error : undefined;

@@ -98,13 +98,17 @@ export const SourcesPanel = forwardRef<SourcesPanelHandle, Props>(function Sourc
   } }));
   useEffect(() => {
     mounted.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bumping the live versions invalidates pending requests on unmount.
     return () => { mounted.current = false; version.current++; backupVersion.current++; };
   }, []);
+  const viewId = 'id' in view ? view.id : '';
+  const packageId = view.kind === 'package' ? view.package.id : '';
   useEffect(() => {
     if (active) heading.current?.focus();
-  }, [active, view.kind, 'id' in view ? view.id : '']);
+  }, [active, view.kind, viewId]);
   useEffect(() => {
     if (view.kind !== 'list' && view.kind !== 'create' && !source && !pending) move({ kind: 'list' });
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- move is recreated every render; the effect reacts to data changes only.
   }, [state.dataSources, view, source, pending]);
   useEffect(() => {
     if (!active || !source || (view.kind !== 'detail' && view.kind !== 'package')) return;
@@ -116,7 +120,7 @@ export const SourcesPanel = forwardRef<SourcesPanelHandle, Props>(function Sourc
       setBrowseResult({ ...result, loading: true, error: '' });
     };
     const read = view.kind === 'package'
-      ? api.packageActivities(view.package.id, browse.page, browse.query).then(data => accept({ kind: 'snapshot', data }))
+      ? api.packageActivities(packageId, browse.page, browse.query).then(data => accept({ kind: 'snapshot', data }))
       : detailTab === 'packages'
         ? api.sourcePackages(source.id, browse.page, browse.query).then(data => accept({ kind: 'packages', data }))
         : api.sourceActivities(source.id, browse.page, browse.query).then(data => accept({ kind: 'activities', data }));
@@ -125,7 +129,8 @@ export const SourcesPanel = forwardRef<SourcesPanelHandle, Props>(function Sourc
         setBrowseResult(current => ({ ...current, error: errorText(issue, m('loadFailed')) }));
     }).finally(() => { if (!cancelled && operation === version.current) setBrowseResult(current => ({ ...current, loading: false })); });
     return () => { cancelled = true; };
-  }, [active, source?.id, view.kind, view.kind === 'package' ? view.package.id : '', detailTab, browse.page, browse.query, state.revision]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- source is tracked by id, and a language switch must not reload.
+  }, [active, source?.id, view.kind, packageId, detailTab, browse.page, browse.query, state.revision]);
   const back = () => {
     if (!canLeave()) return;
     move(view.kind === 'package' || view.kind === 'rename' || view.kind === 'delete' || view.kind === 'import'

@@ -91,6 +91,7 @@ export function AuthBoundary({ children }: { children: ReactNode }) {
       window.removeEventListener('pageshow', onActive);
       document.removeEventListener('visibilitychange', onActive);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- session listeners are installed once for the lifetime of the boundary.
   }, []);
 
   useEffect(() => { if (view === 'login' && !pending) passwordInput.current?.focus(); }, [view, pending]);

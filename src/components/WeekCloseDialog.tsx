@@ -61,7 +61,9 @@ export function WeekCloseDialog({ weekStart, revision, onLoad, busy, requestErro
         setLoaded({ week: weekStart, sourceRevision: revision, attempt: loadAttempt, error: errorText(issue, m('weekLoadFailed')) });
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bumping the live generation invalidates the pending load.
     return () => { loadGeneration.current++; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- a language switch must not reload the review.
   }, [weekStart, revision, loadAttempt]);
   const currentLoad = loaded?.week === weekStart && loaded.sourceRevision === revision && loaded.attempt === loadAttempt ? loaded : null;
   const review = currentLoad?.review;

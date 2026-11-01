@@ -103,6 +103,7 @@ export default function App() {
     const known = knownSources.current;
     setSources(current => ids.filter(id => !known || !known.has(id) || current.includes(id)));
     knownSources.current = new Set(ids);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- only a changed set of source ids may reset the filter.
   }, [sourceIds]);
   const editorOpen = editor !== null;
   const error = displayText(failure?.message);
@@ -141,7 +142,7 @@ export default function App() {
     const selector = page === 'calendar' ? '.calendar-workspace h1' : page === 'reports' ? '.reports-page h1' : '.templates-page h1';
     const heading = mainRef.current?.querySelector<HTMLElement>(selector);
     if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
-  }, [page]);
+  }, [page, mainRef]);
   const goToPage = (next: WorkspacePage) => {
     if (navigatePage(next) && next === 'reports' && !accountVisited) setAccountSeed(current => ({ id: current.id, date: anchorDate }));
   };

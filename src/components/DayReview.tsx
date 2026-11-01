@@ -46,6 +46,7 @@ export function DayReview({
   const sourceKey = JSON.stringify(enabledSources);
   const pageKey = JSON.stringify([date, sourceKey, query]);
   const visible = pageState.key === pageKey ? pageState.count : 50;
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- sourceKey is the stable form of enabledSources.
   const review = useMemo(() => dayReviewData(state, date, enabledSources), [state, date, sourceKey]);
   const matches = useMemo(() => filterDayReview(review.rows, query), [review.rows, query]);
   const page = useMemo(() => pageDayReview(matches, visible), [matches, visible]);

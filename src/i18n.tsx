@@ -61,6 +61,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = language;
     document.title = t('title');
     document.querySelector('meta[name="description"]')?.setAttribute('content', t('description'));
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- document metadata follows the language only.
   }, [language]);
   return children;
 }

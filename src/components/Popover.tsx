@@ -10,6 +10,7 @@ export function Popover({ label, children, trigger, className = 'button secondar
   const button = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const id = useId();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- runs after every render; setOpen(false) is guarded by open.
   useLayoutEffect(() => {
     if (open && !button.current?.getClientRects().length) setOpen(false);
   });

@@ -101,6 +101,7 @@ export function useCalendarFocus({
     return () => {
       document.body.style.overflow = oldOverflow;
       window.scrollTo({ top: priorPageScroll.current });
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- focus returns to the toggle rendered when focus mode ends.
       focusToggle.current?.focus({ preventScroll: true });
     };
   }, [focused]);

@@ -101,6 +101,7 @@ export function useImportFlow({
   useEffect(() => {
     onGuardChange?.(canLeave);
     return () => onGuardChange?.(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the guard reads current state through refs; register it once per owner.
   }, [onGuardChange]);
   const invalidatePreview = (message: TextValue = '') => {
     const nextVersion = ++version.current;
@@ -121,6 +122,7 @@ export function useImportFlow({
     mounted.current = true;
     return () => {
       mounted.current = false;
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- bumping the live version invalidates pending requests on unmount.
       version.current++;
     };
   }, []);
@@ -133,6 +135,7 @@ export function useImportFlow({
       m('timezoneChanged'),
     );
     setPreviewZone(timezone);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- a language switch must not invalidate the preview.
   }, [timezone, previewZone, step, committing]);
 
   const rows = useMemo(() => preview?.rows ?? [], [preview]);

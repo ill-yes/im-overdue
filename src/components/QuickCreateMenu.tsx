@@ -94,6 +94,7 @@ export function QuickCreateMenu({ draft, state, busy, requestError, onSave, onDe
     document.addEventListener('pointerdown', pointerdown, true);
     document.addEventListener('focusin', focusin);
     return () => { document.removeEventListener('keydown', keydown, true); document.removeEventListener('pointerdown', pointerdown, true); document.removeEventListener('focusin', focusin); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- back only touches refs and state setters, so an older copy is safe.
   }, [onClose]);
 
   const input = (text = { title, note }): BlockInput => ({ ...draft.input, title: text.title.trim(), note: text.note.trim() });
