@@ -15,6 +15,15 @@ Starte deine eigene Instanz und bewahre ihre Daten sicher auf.
 [Unraid einrichten](docker.md#unraid) ·
 [Lokal mit Node.js starten](development.md#lokal-ausführen)
 
+### 🔧 Deine Instanz betreiben
+
+Prüfe ihren Status, aktualisiere das Image und halte eine wiederherstellbare Kopie deiner Daten bereit.
+
+[Befehle im Alltag](docker.md#befehle-im-alltag) ·
+[Image-Version wählen](docker.md#image-versionen) ·
+[Aktualisieren oder Passwort ändern](docker.md#passwort-ändern-und-aktualisieren) ·
+[Sichern und wiederherstellen](docker.md#backup-und-offline-wiederherstellung)
+
 ### 📅 Arbeitszeit erfassen und prüfen
 
 Prüfe die Einstellungen, erfasse einen Arbeitstag und schließe fertige Wochen ab.

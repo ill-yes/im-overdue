@@ -15,6 +15,15 @@ Get your own instance running, then keep its data safe.
 [Set up Unraid](docker.md#unraid) ·
 [Run locally with Node.js](development.md#run-locally)
 
+### 🔧 Keep your instance running
+
+Check its status, update the image and keep a recoverable copy of your data.
+
+[Everyday commands](docker.md#everyday-commands) ·
+[Choose an image version](docker.md#image-versions) ·
+[Update or change the password](docker.md#change-the-password-or-update) ·
+[Back up and restore](docker.md#backup-and-offline-restore)
+
 ### 📅 Record and review your time
 
 Check your settings, record a working day and review completed weeks.

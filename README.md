@@ -5,12 +5,13 @@
 <p align="center"><strong>Your work. Your time. A clearer week.</strong></p>
 
 <p align="center">
-  <a href="https://github.com/ill-yes/im-overdue/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/CI-GitHub_Actions-475569?logo=githubactions&amp;logoColor=white" alt="CI: GitHub Actions" /></a>
+  <a href="https://github.com/ill-yes/im-overdue/actions/workflows/ci.yml"><img src="https://github.com/ill-yes/im-overdue/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI checks on main" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-PolyForm_Noncommercial-56745C" alt="License: PolyForm Noncommercial 1.0.0" /></a>
   <a href="#start-locally"><img src="https://img.shields.io/badge/Node.js-24%2B-56745C?logo=nodedotjs&amp;logoColor=white" alt="Node.js 24 or newer" /></a>
 </p>
 
 <p align="center">
+  <a href="https://github.com/ill-yes/im-overdue/pkgs/container/im-overdue"><img src="https://img.shields.io/badge/container-GHCR-2496ED?logo=docker&amp;logoColor=white" alt="Public container on GHCR" /></a>
   <a href="docs/docker.md"><img src="https://img.shields.io/badge/Docker-AMD64_%7C_ARM64-356B8C?logo=docker&amp;logoColor=white" alt="Docker: AMD64 and ARM64" /></a>
   <a href="README.de.md"><img src="https://img.shields.io/badge/languages-English_%7C_Deutsch-475569" alt="English and Deutsch" /></a>
   <a href="https://buymeacoffee.com/ill_yes"><img src="https://img.shields.io/badge/Buy_Me_a_Coffee-support-FFDD00?logo=buymeacoffee&amp;logoColor=000" alt="Buy Me a Coffee" /></a>
@@ -20,7 +21,7 @@
 
 <p align="center">
   <strong>Quick links</strong><br />
-  <a href="#start-with-docker">🚀 Get started</a> · <a href="#screenshots">👀 Take a look</a> · <a href="#features">✨ Features</a> · <a href="#first-steps">📅 How it works</a> · <a href="#documentation">📚 Documentation</a> · <a href="#support-im-overdue">☕ Support</a>
+  <a href="#start-with-docker">🚀 Get started</a> · <a href="#screenshots">👀 Take a look</a> · <a href="#features">✨ Features</a> · <a href="#first-steps">📅 How it works</a> · <a href="docs/docker.md#everyday-commands">🔧 Run & maintain</a> · <a href="#documentation">📚 Documentation</a> · <a href="#support-im-overdue">☕ Support</a>
 </p>
 
 A busy week can be hard to piece together. I'm Overdue gives your work a
@@ -58,9 +59,16 @@ you record working time yourself.*
 
 ## Start with Docker
 
-The public image supports AMD64 and ARM64. Docker selects the matching
-architecture. Install Docker with Compose and curl, then create a new installation folder
-and download the two configuration files. [GHCR image](https://github.com/ill-yes/im-overdue/pkgs/container/im-overdue)
+The public image `ghcr.io/ill-yes/im-overdue:latest` includes the app and its
+database engine. Docker selects the matching AMD64 or ARM64 image.
+
+**You will need:** Docker Engine or Docker Desktop with Compose v2, and `curl`.
+For remote access, prepare an HTTPS reverse proxy; see the
+[Docker and Unraid guide](docs/docker.md).
+
+### 1. Download the configuration
+
+Create a new installation folder and download its two configuration files:
 
 ```sh
 mkdir im-overdue &&
@@ -70,9 +78,18 @@ curl -fsSL https://raw.githubusercontent.com/ill-yes/im-overdue/main/.env.exampl
 chmod 600 .env
 ```
 
-Edit `.env` and set `IM_OVERDUE_ORIGIN` to the exact browser address, for example
-`http://192.168.1.20:4317`, and choose a unique `IM_OVERDUE_PASSWORD` of 12–256
-characters. Single-quote the password in `.env` to preserve `$` and `#` literally.
+### 2. Set your address and password
+
+Edit `.env` and fill in both required values:
+
+- **`IM_OVERDUE_ORIGIN`:** Your exact browser address, e.g.
+  `http://192.168.1.20:4317` or `https://time.example.net`, without a path or trailing slash.
+- **`IM_OVERDUE_PASSWORD`:** A unique password of 12–256 characters; put it in
+  single quotes to preserve `$` and `#` literally.
+
+### 3. Start and sign in
+
+Run these commands in the installation folder:
 
 ```sh
 docker compose pull
@@ -83,8 +100,10 @@ Open the configured address and sign in. Data is stored in `./appdata`, separate
 from local development data. Use HTTPS through your reverse proxy for remote
 access; HTTP sends your password and data without encryption.
 
-See the [Docker and Unraid guide](docs/docker.md) for version pinning, permissions,
-HTTPS, password changes, updates, backups and offline restore.
+[Choose an image version](docs/docker.md#image-versions) ·
+[Set up Unraid](docs/docker.md#unraid) ·
+[Update an installation](docs/docker.md#change-the-password-or-update) ·
+[Back up and restore](docs/docker.md#backup-and-offline-restore)
 
 ## Start locally
 
@@ -121,6 +140,9 @@ steps, including quick entry, breaks and precise times.
 Start with what you want to do:
 
 - **🚀 Install and self-host:** [Docker and Unraid](docs/docker.md).
+- **🔧 Keep it running:** [everyday commands](docs/docker.md#everyday-commands),
+  [updates](docs/docker.md#change-the-password-or-update) and
+  [backups](docs/docker.md#backup-and-offline-restore).
 - **📅 Record and review your time:** [Using I'm Overdue](docs/usage.md).
 - **⚖️ Manage your account and absences:** [Hours account](docs/usage.md#hours-account),
   [absences](docs/usage.md#absences) and [public holidays](docs/usage.md#public-holidays).

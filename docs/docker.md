@@ -4,28 +4,15 @@
 
 [Documentation](README.md) · [Usage](usage.md) · [Docker and Unraid](docker.md) · [Import format](import-format.md) · [Development](development.md)
 
-Run I'm Overdue on your own server with the public GHCR image. Start with
-Compose, then use the sections below for persistent storage, HTTPS, Unraid and
-recovery. Docker selects the matching image for `linux/amd64` or `linux/arm64`.
+Run I'm Overdue on your own server with the public GHCR image. The Compose setup
+below downloads the image; Docker selects `linux/amd64` or `linux/arm64` for your host.
 [View the container package](https://github.com/ill-yes/im-overdue/pkgs/container/im-overdue).
-
-One container runs the UI, API and SQLite on HTTP port `4317`; no database or
-other service is needed. Multi-stage builds use Node 24 on Debian Bookworm Slim
-for `linux/amd64` and `linux/arm64`. The runtime contains the built app, production
-dependencies and the small `gosu` user-switch helper. It also includes
-`/app/LICENSE`, `/app/NOTICE`, `/app/COMMERCIAL-LICENSE.md` and
-`/app/CONTRIBUTING.md`; the OCI label
-`org.opencontainers.image.licenses` is `PolyForm-Noncommercial-1.0.0`.
-Original license texts for bundled React, React DOM, Lucide and Manrope assets
-are retained in `/app/third-party-licenses`. Runtime dependencies keep their
-own license files in `/app/node_modules`.
-
-The project uses the [PolyForm Noncommercial License 1.0.0](../LICENSE).
-The Compose setup below downloads the published image.
 
 **On this page**
 
 - [Start with Compose](#start-with-compose)
+- [Image versions](#image-versions)
+- [Everyday commands](#everyday-commands)
 - [Persistent storage and permissions](#persistent-storage-and-permissions)
 - [HTTPS with an existing reverse proxy](#https-with-an-existing-reverse-proxy)
 - [Unraid](#unraid)
@@ -33,8 +20,11 @@ The Compose setup below downloads the published image.
 - [Backup and offline restore](#backup-and-offline-restore)
 - [Optional local source build](#optional-local-source-build)
 - [Local container checks](#local-container-checks)
+- [Image contents and licenses](#image-contents-and-licenses)
 
 ## Start with Compose
+
+### 1. Download the setup files
 
 Install Docker with Compose and curl. Create a new, empty directory for the
 deployment and download the Compose file and environment template there.
@@ -46,6 +36,8 @@ curl -fsSL https://raw.githubusercontent.com/ill-yes/im-overdue/main/compose.yam
 curl -fsSL https://raw.githubusercontent.com/ill-yes/im-overdue/main/.env.example -o .env &&
 chmod 600 .env
 ```
+
+### 2. Configure the installation
 
 Edit `.env` and fill in the two required values.
 
@@ -61,18 +53,14 @@ Include a non-standard external port; omit default ports `:80` and `:443`.
 Single-quote the password in `.env` so `$` and `#` stay literal. Keep `.env`,
 container configuration and support screenshots private.
 
+To choose a specific version before the first start, see [Image versions](#image-versions).
+
+### 3. Start and sign in
+
 ```sh
 docker compose pull
 docker compose up -d --no-build
 docker compose ps
-```
-
-The default `latest` tag follows the newest published release. To pin version
-`1.0.0`, change the `image` line in `compose.yaml` before running the commands
-above.
-
-```yaml
-image: ghcr.io/ill-yes/im-overdue:1.0.0
 ```
 
 Open the configured address and sign in. Every other browser address is rejected,
@@ -82,6 +70,34 @@ the host port. HTTP transmits the password and data without encryption; use
 
 Choose English or German before signing in or in settings. English is the first-use
 default. The language is saved per browser and does not change the container or database.
+
+## Image versions
+
+The default `latest` tag follows the newest published release. To pin version
+`1.0.0`, change the `image` line in `compose.yaml` before starting the container.
+
+```yaml
+image: ghcr.io/ill-yes/im-overdue:1.0.0
+```
+
+| Tag | Use |
+| --- | --- |
+| `latest` | Follow the newest published release. |
+| `1.0.0` | Select version 1.0.0 explicitly. |
+
+## Everyday commands
+
+Run these and all other Compose commands for this installation from the installation
+folder containing `compose.yaml` and `.env`.
+
+| Task | Command |
+| --- | --- |
+| Show status | `docker compose ps` |
+| Show recent logs | `docker compose logs --tail=100 im-overdue` |
+| Stop | `docker compose stop` |
+| Start | `docker compose up -d --no-build` |
+
+Redact private values from logs and screenshots before sharing them.
 
 ## Persistent storage and permissions
 
@@ -275,6 +291,21 @@ containers, volumes and isolated data. Normal CI checks the app, browser and bot
 architectures; the GitHub AMD64 runner tests ARM64 through QEMU. Maintainers can
 find the manual release workflow under
 [Publishing container images](development.md#publishing-container-images).
+
+## Image contents and licenses
+
+One container runs the UI, API and SQLite on HTTP port `4317`; no database or
+other service is needed. Multi-stage builds use Node 24 on Debian Bookworm Slim
+for `linux/amd64` and `linux/arm64`. The runtime contains the built app, production
+dependencies and the small `gosu` user-switch helper. It also includes
+`/app/LICENSE`, `/app/NOTICE`, `/app/COMMERCIAL-LICENSE.md` and
+`/app/CONTRIBUTING.md`; the OCI label
+`org.opencontainers.image.licenses` is `PolyForm-Noncommercial-1.0.0`.
+Original license texts for bundled React, React DOM, Lucide and Manrope assets
+are retained in `/app/third-party-licenses`. Runtime dependencies keep their
+own license files in `/app/node_modules`.
+
+The project uses the [PolyForm Noncommercial License 1.0.0](../LICENSE).
 
 ## Next steps
 
