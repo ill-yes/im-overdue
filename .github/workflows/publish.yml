@@ -1,64 +1,97 @@
-name: Publish container (manual)
+name: Release
+run-name: Release ${{ inputs.bump }} from main
 on:
   workflow_dispatch:
+    inputs:
+      bump:
+        description: Version increment from the latest stable release
+        required: true
+        default: patch
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
 permissions:
   contents: read
 concurrency:
   group: publish-container
   cancel-in-progress: false
+env:
+  RELEASE_BUMP: ${{ inputs.bump }}
 jobs:
-  verify:
-    if: github.repository == 'ill-yes/im-overdue'
+  plan:
+    if: github.repository == 'ill-yes/im-overdue' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
-      version: ${{ steps.release.outputs.version }}
+      plan: ${{ steps.plan.outputs.plan }}
+      mode: ${{ steps.plan.outputs.mode }}
+      version: ${{ steps.plan.outputs.version }}
+      source_commit: ${{ steps.plan.outputs.source_commit }}
+      build_date: ${{ steps.plan.outputs.build_date }}
     steps:
-      - name: Require manual run on main
-        run: |
-          if [ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ] || [ "$GITHUB_REF" != "refs/heads/main" ]; then
-            echo "::error::Run this workflow manually with the main branch selected."
-            exit 1
-          fi
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Resolve release version and source
+        id: plan
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/release/run.mjs plan
+
+  verify:
+    needs: plan
+    if: needs.plan.outputs.mode != 'complete'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      RELEASE_VERSION: ${{ needs.plan.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.source_commit }}
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
-      - name: Verify package version
-        id: release
-        run: |
-          node --input-type=module <<'JS'
-          import { readFileSync, appendFileSync, existsSync } from 'node:fs';
-          const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
-          const version = pkg.version;
-          if (typeof version !== 'string' || !/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(version)) {
-            throw new Error('package.json must contain a stable X.Y.Z version without a prerelease or build suffix.');
-          }
-          if (!existsSync('LICENSE')) throw new Error('Choose and add the project license before publishing.');
-          appendFileSync(process.env.GITHUB_OUTPUT, `version=${version}\n`);
-          JS
+      - name: Set build package version
+        run: npm version "$RELEASE_VERSION" --allow-same-version --no-git-tag-version --ignore-scripts
       - run: npm ci
       - run: npm run typecheck
+      - run: npm run lint
       - run: npm test
+      - run: node --test scripts/release/*.test.mjs
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+
   container-tests:
-    needs: verify
+    needs: [plan, verify]
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         platform: [linux/amd64, linux/arm64]
+    env:
+      RELEASE_VERSION: ${{ needs.plan.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ needs.plan.outputs.source_commit }}
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Set build package version
+        run: npm version "$RELEASE_VERSION" --allow-same-version --no-git-tag-version --ignore-scripts
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
       - uses: docker/build-push-action@v6
@@ -68,38 +101,73 @@ jobs:
           load: true
           push: false
           tags: im-overdue:test
+          build-args: |
+            VERSION=${{ needs.plan.outputs.version }}
+            REVISION=${{ needs.plan.outputs.source_commit }}
+            BUILD_DATE=${{ needs.plan.outputs.build_date }}
       - name: Container smoke tests (arm64 uses QEMU on this runner)
         run: npm run test:container -- im-overdue:test
+
   publish:
-    needs: [verify, container-tests]
+    needs: [plan, verify, container-tests]
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
-      contents: read
+      contents: write
       packages: write
+    env:
+      RELEASE_PLAN: ${{ needs.plan.outputs.plan }}
+      RELEASE_VERSION: ${{ needs.plan.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Revalidate and reserve the release tag
+        id: prepare
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/release/run.mjs prepare
+      - uses: actions/checkout@v4
+        if: steps.prepare.outputs.build == 'true'
+        with:
+          ref: ${{ needs.plan.outputs.source_commit }}
+          path: release-source
+          persist-credentials: false
+      - name: Set build package version
+        if: steps.prepare.outputs.build == 'true'
+        working-directory: release-source
+        run: npm version "$RELEASE_VERSION" --allow-same-version --no-git-tag-version --ignore-scripts
       - uses: docker/setup-qemu-action@v3
+        if: steps.prepare.outputs.build == 'true'
       - uses: docker/setup-buildx-action@v3
+        if: steps.prepare.outputs.complete != 'true'
       - uses: docker/login-action@v3
+        if: steps.prepare.outputs.complete != 'true'
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Record build time
-        id: build-time
-        run: echo "date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
-      - name: Build and push both architectures
+      - name: Build and push the exact version
+        id: build
+        if: steps.prepare.outputs.build == 'true'
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: release-source
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: |
-            ghcr.io/ill-yes/im-overdue:${{ needs.verify.outputs.version }}
-            ghcr.io/ill-yes/im-overdue:latest
+          tags: ghcr.io/ill-yes/im-overdue:${{ needs.plan.outputs.version }}
           build-args: |
-            VERSION=${{ needs.verify.outputs.version }}
-            REVISION=${{ github.sha }}
-            BUILD_DATE=${{ steps.build-time.outputs.date }}
+            VERSION=${{ needs.plan.outputs.version }}
+            REVISION=${{ needs.plan.outputs.source_commit }}
+            BUILD_DATE=${{ needs.plan.outputs.build_date }}
+      - name: Verify digest, promote aliases and create GitHub Release
+        if: steps.prepare.outputs.complete != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_DIGEST: ${{ steps.build.outputs.digest || steps.prepare.outputs.digest }}
+        run: node scripts/release/run.mjs finish

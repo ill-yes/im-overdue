@@ -76,8 +76,8 @@ docker build -t im-overdue:test .
 npm run test:container -- im-overdue:test
 ```
 
-CI prüft App, XML/Compose und Container je Architektur. Die Image-Veröffentlichung
-hat einen eigenen manuellen Workflow mit Lizenz-, Versions- und Main-Branch-Prüfung.
+CI prüft App, XML/Compose und Container je Architektur. Der separate manuelle
+Workflow **Release** prüft Lizenz, Version und Quellcommit vor der Veröffentlichung.
 Siehe [Container-Images veröffentlichen](#container-images-veröffentlichen).
 
 ## Lokalisierung prüfen
@@ -97,22 +97,35 @@ Namen beide Sprachen.
 ## Container-Images veröffentlichen
 
 Veröffentlichung ist nur manuell möglich. Prüfe die Lizenzbedingungen und die
-[erforderlichen Hinweise](../../NOTICE). Erhöhe vor der Veröffentlichung bei
-Bedarf `version` in `package.json` auf eine stabile `X.Y.Z`-Version ohne Vorab- oder
-Buildzusatz und stelle sicher, dass die gewünschten Änderungen auf `main` liegen.
-Öffne in GitHub Actions **Publish container (manual) → Run workflow**, wähle
-**main** und starte den Lauf selbst. Andere Branches und Tags werden abgelehnt.
-Es gibt keine Versionseingabe: Der Workflow liest `package.json` aus dem gewählten
-Commit und nutzt denselben Commit für App-, Browser- und AMD64-/ARM64-
-Containerprüfungen sowie den abschließenden Build. Nach erfolgreichen Prüfungen
-pusht er `ghcr.io/ill-yes/im-overdue:X.Y.Z` und `:latest`.
-Er erzeugt weder Commit noch Git-Tag oder GitHub Release. Normale Pushes und Pull
-Requests starten Prüfungen, keine Image-Veröffentlichung.
+[erforderlichen Hinweise](../../NOTICE) und stelle sicher, dass die gewünschten
+Änderungen auf `main` liegen. Öffne in GitHub Actions **Release → Run workflow**,
+wähle **main** und dann `patch` (Standard), `minor` oder `major`. Andere Branches
+und Tags werden abgelehnt. Normale Pushes und Pull Requests starten Prüfungen,
+ohne ein Image zu veröffentlichen.
 
-Die Sichtbarkeit des GHCR-Pakets ist unabhängig von der Repository-Sichtbarkeit.
-Prüfe die Paketeinstellungen und wähle die für das Release passende Sichtbarkeit.
-Für öffentliche Verteilung stelle das Paket auf öffentlich und prüfe anonymen
-Zugriff mit einem Docker-Client ohne GHCR-Zugangsdaten:
+Der Workflow berechnet die nächste Version aus dem stabilen GitHub Release mit
+der höchsten Versionsnummer. Gibt es noch keines, prüft er das vorhandene
+GHCR-Image `1.0.0` und verwendet es als Ausgangsversion. Das erste `patch`-Release
+ist dann `1.0.1`. Der Workflow setzt die npm-Versionsmetadaten vorübergehend im
+Build-Checkout. Auf `main` ist dafür keine Versionsänderung und kein Commit nötig.
+
+App-, Browser- und Containerprüfungen für AMD64 und ARM64 sowie der Release-Build
+nutzen exakt dieselbe Commit-SHA. Nach erfolgreichen Prüfungen legt der Workflow
+`vX.Y.Z` an diesem Commit an, veröffentlicht und prüft
+`ghcr.io/ill-yes/im-overdue:X.Y.Z` und setzt `:X.Y` und `:latest` auf denselben
+geprüften Image-Digest. Anschließend veröffentlicht er das GitHub Release.
+
+Wird die Veröffentlichung nach der Versionsreservierung unterbrochen, starte
+**Release → Run workflow** erneut auf **main**. Der neue Lauf setzt die
+reservierte Version mit der ursprünglichen SHA fort, auch wenn `main` inzwischen
+neue Commits enthält. Ein erneuter Lauf für einen bereits veröffentlichten
+Quellcommit prüft das Release und endet ohne erneute Veröffentlichung. Starte
+keinen alten Lauf von **Publish container (manual)** zur Wiederherstellung.
+
+Das [GHCR-Paket](https://github.com/ill-yes/im-overdue/pkgs/container/im-overdue)
+ist öffentlich. Die Paketsichtbarkeit ist unabhängig von der Repository-Sichtbarkeit.
+Prüfe die Paketeinstellungen und den öffentlichen Zugriff mit einem Docker-Client
+ohne GHCR-Zugangsdaten:
 
 ```sh
 docker pull ghcr.io/ill-yes/im-overdue:X.Y.Z

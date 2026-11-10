@@ -39,7 +39,7 @@ days, school holidays, Christmas Eve and New Year's Eve are not added.
   documents the 2017 and 2018 changes.
 - International Women's Day: BE from 2019, MV from 2023.
   [Berlin Senate](https://www.berlin.de/sen/wgp/presse/2022/pressemitteilung.1183243.php),
-  [MV Landtag](https://www.landtag-mv.de/fileadmin/media/Dokumente/Landtagsnachrichten/LN_2022/LN6_2022.pdf).
+  [MV Landtag](https://www.landtag-mv.de/aktuelles/artikel/internationaler-frauentag-landtagspraesidentin-birgit-hesse-laedt-mitarbeiterinnen-zum-austausch-ein).
 - World Children's Day: TH from 2019.
   [Thuringian Landtag proceedings, 28 February 2019](https://parldok.thueringer-landtag.de/ParlDok/dokument/68539/128_plenarsitzung.pdf).
 - Berlin one-offs: Liberation Day, 8 May 2020 and 2025; 75th anniversary of the
@@ -54,8 +54,8 @@ days, school holidays, Christmas Eve and New Year's Eve are not added.
   includes it;
   [Saxon official historical law](https://www.revosax.sachsen.de/vorschrift/3997.1)
   retains it;
-  [Bundeswehr historical account](https://www.bundeswehr.de/resource/blob/4624142/ac0ef57d0a9afd18a5cf3ac0ddb38991/pfarrerbrief-buss-und-bettag-data.pdf)
-  records its nationwide 1990–1994 status.
+  [Bundestag Research Services](https://www.bundestag.de/resource/blob/632896/25-jahre-pflegeversicherung.pdf)
+  documents its abolition outside Saxony.
 
 ## Historical scope
 
