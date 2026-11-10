@@ -4,8 +4,10 @@
 
 [Documentation](README.md) · [Usage](usage.md) · [Docker and Unraid](docker.md) · [Import format](import-format.md) · [Development](development.md)
 
-Run I'm Overdue on your own server. Start with Compose, then use the sections
-below for persistent storage, HTTPS, Unraid and recovery.
+Run I'm Overdue on your own server with the public GHCR image. Start with
+Compose, then use the sections below for persistent storage, HTTPS, Unraid and
+recovery. Docker selects the matching image for `linux/amd64` or `linux/arm64`.
+[View the container package](https://github.com/ill-yes/im-overdue/pkgs/container/im-overdue).
 
 One container runs the UI, API and SQLite on HTTP port `4317`; no database or
 other service is needed. Multi-stage builds use Node 24 on Debian Bookworm Slim
@@ -19,7 +21,7 @@ are retained in `/app/third-party-licenses`. Runtime dependencies keep their
 own license files in `/app/node_modules`.
 
 The project uses the [PolyForm Noncommercial License 1.0.0](../LICENSE).
-The Compose setup below builds the image from source.
+The Compose setup below downloads the published image.
 
 **On this page**
 
@@ -29,18 +31,23 @@ The Compose setup below builds the image from source.
 - [Unraid](#unraid)
 - [Change the password or update](#change-the-password-or-update)
 - [Backup and offline restore](#backup-and-offline-restore)
+- [Optional local source build](#optional-local-source-build)
 - [Local container checks](#local-container-checks)
 
 ## Start with Compose
 
-Install Docker with Compose. In the project directory:
+Install Docker with Compose and curl. Create a new, empty directory for the
+deployment and download the Compose file and environment template there.
 
 ```sh
-cp .env.example .env
+mkdir im-overdue &&
+cd im-overdue &&
+curl -fsSL https://raw.githubusercontent.com/ill-yes/im-overdue/main/compose.yaml -o compose.yaml &&
+curl -fsSL https://raw.githubusercontent.com/ill-yes/im-overdue/main/.env.example -o .env &&
 chmod 600 .env
 ```
 
-Fill in the two required values:
+Edit `.env` and fill in the two required values.
 
 | Variable | Value |
 | --- | --- |
@@ -55,8 +62,17 @@ Single-quote the password in `.env` so `$` and `#` stay literal. Keep `.env`,
 container configuration and support screenshots private.
 
 ```sh
-docker compose up -d --build
+docker compose pull
+docker compose up -d --no-build
 docker compose ps
+```
+
+The default `latest` tag follows the newest published release. To pin version
+`1.0.0`, change the `image` line in `compose.yaml` before running the commands
+above.
+
+```yaml
+image: ghcr.io/ill-yes/im-overdue:1.0.0
 ```
 
 Open the configured address and sign in. Every other browser address is rejected,
@@ -151,19 +167,14 @@ they could then choose their own address.
 
 ## Unraid
 
-Build your own image on the Unraid host from the project directory:
+In **Docker → Add Container**, use the included
+[XML template](../templates/im-overdue.xml) as a reference for a manual setup.
+Keep **Repository** set to `ghcr.io/ill-yes/im-overdue:latest` and **Registry**
+set to the public
+[container package](https://github.com/ill-yes/im-overdue/pkgs/container/im-overdue).
+Unraid downloads the image from GHCR.
 
-```sh
-docker build -t im-overdue:local .
-```
-
-In **Docker → Add Container**, use `templates/im-overdue.xml` as a reference
-for a manual setup. Set **Repository** to `im-overdue:local` and clear
-**Registry** for this local image. Make the same changes in any local copy of
-the XML template you use. If you host your own image in a registry, use its
-image tag and registry page instead.
-
-Configure the template:
+Configure the template.
 
 1. Use bridge networking and an HTTP host port, default `4317`. Do not enable privileged mode.
 2. Mount dedicated appdata, for example `/mnt/user/appdata/im-overdue`, at `/data`.
@@ -178,15 +189,32 @@ substitutes its own IP/port placeholders. Preserve Host and Origin at the proxy.
 
 ## Change the password or update
 
-For Compose, edit `.env`, then run `docker compose up -d --force-recreate`.
+For Compose, edit the password in `.env`, then recreate the container.
+
+```sh
+docker compose up -d --no-build --force-recreate
+```
+
 For Unraid, use **Edit → Password → Apply**. Restart signs out every browser;
 sessions are not included in backups.
 
-Before an update, download a backup, check out the intended source version and
-run `docker compose up -d --build`. For Unraid, rebuild your local image from
-that version and recreate the container with the same settings and appdata
-mapping. Before downgrading, retain a matching backup and check database
-compatibility.
+Before an update, download a backup. If you pinned a version, change the `image`
+tag in `compose.yaml` to the intended version, then pull and recreate.
+
+```sh
+docker compose pull
+docker compose up -d --no-build
+```
+
+For Unraid, update the image through its Docker page. If you pinned a version,
+change **Repository** to the intended tag and apply the change. Keep the same
+settings and appdata mapping. Before downgrading, retain a matching backup and
+check database compatibility.
+
+For a local source build, check out the intended source version and run
+`docker compose up -d --build` in that checkout. For a locally built Unraid
+image, rebuild it from that version and recreate the container with the same
+settings and appdata mapping.
 
 ## Backup and offline restore
 
@@ -201,14 +229,37 @@ For Compose's default bind mount:
 2. Move all existing `appdata`, including WAL/SHM, to a safe **different location** and keep it.
 3. Create fresh `appdata`. Put only the downloaded snapshot there as
    `im-overdue.sqlite`; do not copy old WAL/SHM files alongside it.
-4. Run `docker compose up -d`. The helper sets private permissions. Sign in and
-   check time zone, target profiles, a work week and its balance.
+4. Run `docker compose up -d --no-build`. The helper sets private permissions.
+   Sign in and check time zone, target profiles, a work week and its balance.
 
 For Unraid, stop the container first and follow the same steps for its appdata
 path. For a named volume, stop the container, separately preserve all old volume
 contents, place the snapshot in a fresh volume and point Compose at that new
 volume. Keep the original until verification. With an explicit non-root user,
 set ownership and modes before starting.
+
+## Optional local source build
+
+To build the image yourself, use a full Git checkout with the included
+`Dockerfile`.
+
+```sh
+git clone https://github.com/ill-yes/im-overdue.git &&
+cd im-overdue &&
+cp .env.example .env &&
+chmod 600 .env
+```
+
+Configure `.env` as described under [Start with Compose](#start-with-compose),
+then build and start the container.
+
+```sh
+docker compose up -d --build
+docker compose ps
+```
+
+For a local Unraid image, run `docker build -t im-overdue:local .` in the checkout,
+set **Repository** to `im-overdue:local` and clear **Registry**.
 
 ## Local container checks
 

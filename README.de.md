@@ -60,28 +60,34 @@ beim Erinnern; Arbeitszeit erfasst du selbst.*
 
 ## Mit Docker starten
 
-Installiere Docker mit Compose und führe im Projektverzeichnis aus:
+Das öffentliche Image unterstützt AMD64 und ARM64. Docker wählt die passende
+Architektur. Installiere Docker mit Compose und curl, lege einen neuen Installationsordner
+an und lade die beiden Konfigurationsdateien herunter. [GHCR-Image](https://github.com/ill-yes/im-overdue/pkgs/container/im-overdue)
 
 ```sh
-cp .env.example .env
+mkdir im-overdue &&
+cd im-overdue &&
+curl -fsSL https://raw.githubusercontent.com/ill-yes/im-overdue/main/compose.yaml -o compose.yaml &&
+curl -fsSL https://raw.githubusercontent.com/ill-yes/im-overdue/main/.env.example -o .env &&
 chmod 600 .env
 ```
 
-Bearbeite `.env`: Trage unter `IM_OVERDUE_ORIGIN` die genaue Browseradresse ein,
+Bearbeite `.env` und trage unter `IM_OVERDUE_ORIGIN` die genaue Browseradresse ein,
 zum Beispiel `http://192.168.1.20:4317`, und wähle ein eigenes
 `IM_OVERDUE_PASSWORD` mit 12–256 Zeichen. Setze das Passwort in `.env` in einfache
 Anführungszeichen, damit `$` und `#` unverändert bleiben.
 
 ```sh
-docker compose up -d --build
+docker compose pull
+docker compose up -d --no-build
 ```
 
 Öffne die konfigurierte Adresse und melde dich an. Deine Daten liegen unter
 `./appdata`, getrennt von lokalen Entwicklungsdaten. Nutze für entfernten Zugriff
 HTTPS über deinen Reverse Proxy; HTTP überträgt Passwort und Daten unverschlüsselt.
 
-Die [Docker-/Unraid-Anleitung](docs/de/docker.md) erklärt Rechte, HTTPS,
-Passwortwechsel, Updates, Backups und Offline-Wiederherstellung.
+Die [Docker-/Unraid-Anleitung](docs/de/docker.md) erklärt Versionswahl, Rechte,
+HTTPS, Passwortwechsel, Updates, Backups und Offline-Wiederherstellung.
 
 ## Lokal starten
 
