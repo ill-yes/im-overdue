@@ -1,13 +1,10 @@
 im-overdue
-Required Notice: Copyright (c) 2026 ill-yes (https://github.com/ill-yes)
+Copyright (c) 2026 ill-yes (https://github.com/ill-yes)
 
-Project code is provided under the unchanged PolyForm Noncommercial License
-1.0.0. See LICENSE for the complete terms and COMMERCIAL-LICENSE.md for
-inquiries about uses outside those terms. This notice adds no permissions
-or restrictions to the license.
+Project contents are provided under the MIT License. See LICENSE for the terms.
 
 Third-party software, fonts and other assets remain subject to their own
-licenses and copyright notices, not the project's PolyForm license.
-The container includes the original license texts for the bundled React,
-React DOM, Lucide and Manrope assets in /app/third-party-licenses.
-Runtime dependencies retain their license files in /app/node_modules.
+licenses and copyright notices. The container includes the original license
+texts for the bundled React, React DOM, Lucide and Manrope assets in
+/app/third-party-licenses. Runtime dependencies retain their license files in
+/app/node_modules.

@@ -27,7 +27,7 @@ ARG BUILD_DATE=unknown
 LABEL org.opencontainers.image.title="im-overdue" \
     org.opencontainers.image.description="Private single-user time account with a browser UI and SQLite storage." \
     org.opencontainers.image.source="https://github.com/ill-yes/im-overdue" \
-    org.opencontainers.image.licenses="PolyForm-Noncommercial-1.0.0" \
+    org.opencontainers.image.licenses="MIT" \
     org.opencontainers.image.version="${VERSION}" \
     org.opencontainers.image.revision="${REVISION}" \
     org.opencontainers.image.created="${BUILD_DATE}"
@@ -38,7 +38,7 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/dist-server ./dist-server
 COPY --from=build /app/third-party-licenses ./third-party-licenses
-COPY LICENSE NOTICE COMMERCIAL-LICENSE.md CONTRIBUTING.md ./
+COPY LICENSE NOTICE CONTRIBUTING.md ./
 COPY --chmod=0755 docker/entrypoint.sh /usr/local/bin/im-overdue-entrypoint
 COPY docker/healthcheck.mjs ./healthcheck.mjs
 RUN mkdir /data

@@ -310,14 +310,14 @@ Ein Container betreibt Oberfläche, API und SQLite auf HTTP-Port `4317`; weitere
 Dienste sind nicht nötig. Mehrstufige Builds nutzen Node 24 auf Debian Bookworm
 Slim für `linux/amd64` und `linux/arm64`. Das Laufzeitimage enthält gebaute App,
 Produktionsabhängigkeiten und den kleinen Benutzerwechsel-Helfer `gosu`.
-Es enthält außerdem `/app/LICENSE`, `/app/NOTICE`, `/app/COMMERCIAL-LICENSE.md`
+Es enthält außerdem `/app/LICENSE`, `/app/NOTICE`
 und `/app/CONTRIBUTING.md`; das OCI-Label `org.opencontainers.image.licenses`
-lautet `PolyForm-Noncommercial-1.0.0`.
+lautet `MIT`.
 Die originalen Lizenztexte für gebündelte React-, React-DOM-, Lucide- und
 Manrope-Assets bleiben unter `/app/third-party-licenses` erhalten.
 Laufzeitabhängigkeiten behalten ihre Lizenzdateien unter `/app/node_modules`.
 
-Das Projekt nutzt die [PolyForm Noncommercial License 1.0.0](../../LICENSE).
+Das Projekt nutzt die [MIT License](../../LICENSE).
 
 ## Weiterführende Schritte
 

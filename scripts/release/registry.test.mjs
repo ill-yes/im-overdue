@@ -22,8 +22,9 @@ const labels = {
   'org.opencontainers.image.version': version,
   'org.opencontainers.image.revision': sourceCommit,
   'org.opencontainers.image.source': source,
-  'org.opencontainers.image.licenses': 'PolyForm-Noncommercial-1.0.0',
+  'org.opencontainers.image.licenses': 'MIT',
 };
+const release = { version, sourceCommit, license: 'MIT' };
 
 function encode(document, mediaType) {
   const bytes = JSON.stringify(document);
@@ -130,7 +131,7 @@ test('verifies exact tag, aliases and digests for an OCI index with BuildKit att
       digest: index.digest,
       platforms: ['amd64', 'arm64'].map(architecture => ({ os: 'linux', architecture, labels })),
     });
-    assertReleaseImage(info, { version, sourceCommit, digest: index.digest });
+    assertReleaseImage(info, { ...release, digest: index.digest });
   }
   assert.equal(calls.filter(call => call.url.pathname === '/token').length, 4);
   assert.ok(calls.find(call => call.url.href === manifestUrl(version)).headers.get('accept').includes(ociIndex));
@@ -139,7 +140,7 @@ test('verifies exact tag, aliases and digests for an OCI index with BuildKit att
 test('accepts Docker manifest lists and legacy BuildKit attestations', async () => {
   for (const options of [{ docker: true }, { attestation: 'legacy' }]) {
     const { client, index } = fixture(options);
-    assertReleaseImage(await client.inspect(version), { version, sourceCommit, digest: index.digest });
+    assertReleaseImage(await client.inspect(version), { ...release, digest: index.digest });
   }
 });
 
@@ -202,7 +203,7 @@ test('accepts signed GHCR blob redirects without sending the Bearer token', asyn
   const location = `${cdn}/signed-config?signature=fixture`;
   routes.set(blobUrl(configs[0].digest), () => Response.redirect(location, 307));
   routes.set(location, () => new Response(configs[0].bytes));
-  assertReleaseImage(await client.inspect(version), { version, sourceCommit, digest: index.digest });
+  assertReleaseImage(await client.inspect(version), { ...release, digest: index.digest });
   assert.equal(calls.find(call => call.url.href === location).headers.get('authorization'), null);
   for (const unsafe of ['https://example.com/blob', 'http://pkg-containers.githubusercontent.com/blob', 'https://example.com@pkg-containers.githubusercontent.com/blob']) {
     routes.set(blobUrl(configs[0].digest), () => Response.redirect(unsafe, 307));
@@ -240,16 +241,16 @@ test('rejects inconsistent architectures, extra platforms and unknown attestatio
 test('checks all required labels on both architectures and an optional expected digest', async () => {
   const { client, index } = fixture();
   const info = await client.inspect(version);
-  assertReleaseImage(info, { version, sourceCommit });
+  assertReleaseImage(info, release);
   assert.throws(() => assertReleaseImage(info, {
-    version, sourceCommit, digest: `sha256:${'0'.repeat(64)}`,
+    ...release, digest: `sha256:${'0'.repeat(64)}`,
   }), /index digest does not match/);
-  assert.throws(() => assertReleaseImage(null, { version, sourceCommit }), /index digest does not match/);
+  assert.throws(() => assertReleaseImage(null, release), /index digest does not match/);
   for (const architecture of ['amd64', 'arm64']) {
     for (const label of Object.keys(labels)) {
       const wrong = structuredClone(info);
       delete wrong.platforms.find(platform => platform.architecture === architecture).labels[label];
-      assert.throws(() => assertReleaseImage(wrong, { version, sourceCommit, digest: index.digest }),
+      assert.throws(() => assertReleaseImage(wrong, { ...release, digest: index.digest }),
         { message: `GHCR linux/${architecture}: unexpected ${label} label` });
     }
   }

@@ -6,8 +6,9 @@ import { finishPublication, planPublication, preparePublication } from './run.mj
 const dispatch = { bump: 'patch', dispatchCommit: '1'.repeat(40), runId: '100', attempt: 1 };
 const patch = { version: '1.0.1', sourceCommit: dispatch.dispatchCommit, digest: `sha256:${'a'.repeat(64)}` };
 const nextMinor = { version: '1.1.0', sourceCommit: '2'.repeat(40), digest: `sha256:${'b'.repeat(64)}` };
+const legacyLicense = 'PolyForm-Noncommercial-1.0.0';
 
-function releaseImage({ version, sourceCommit, digest }) {
+function releaseImage({ version, sourceCommit, digest }, license = 'MIT') {
   return {
     digest,
     platforms: ['amd64', 'arm64'].map(architecture => ({
@@ -17,7 +18,7 @@ function releaseImage({ version, sourceCommit, digest }) {
         'org.opencontainers.image.version': version,
         'org.opencontainers.image.revision': sourceCommit,
         'org.opencontainers.image.source': 'https://github.com/ill-yes/im-overdue',
-        'org.opencontainers.image.licenses': 'PolyForm-Noncommercial-1.0.0',
+        'org.opencontainers.image.licenses': license,
       },
     })),
   };
@@ -27,11 +28,15 @@ function fixture() {
   const tags = [];
   const releases = [];
   const writes = [];
-  const baseline = releaseImage(BOOTSTRAP);
+  const baseline = releaseImage(BOOTSTRAP, legacyLicense);
+  const sourceLicenses = new Map([
+    [BOOTSTRAP.sourceCommit, legacyLicense], [patch.sourceCommit, 'MIT'], [nextMinor.sourceCommit, 'MIT'],
+  ]);
   const images = new Map([[BOOTSTRAP.version, baseline], ['1.0', baseline], ['latest', baseline]]);
   const io = {
     readSnapshot: () => structuredClone({ tags, releases }),
     assertAncestry() {},
+    readSourceLicense: sourceCommit => sourceLicenses.get(sourceCommit),
     registry: {
       async inspect(tag) {
         return images.get(tag) ?? null;
@@ -62,7 +67,7 @@ function fixture() {
     images.set(release.version, releaseImage(release));
   }
 
-  return { io, tags, releases, images, writes, pushExactImage };
+  return { io, tags, releases, images, writes, pushExactImage, sourceLicenses };
 }
 
 test('reserves the Git tag, builds only the exact image, then promotes and creates the release in order', async () => {
@@ -137,6 +142,31 @@ test('resumes after reservation, exact image push and a failed second promotion'
     ['release', patch.version, patch.sourceCommit, patch.digest],
   ]);
   assert.deepEqual(releases, [patch]);
+});
+
+test('a new dispatch resumes a legacy release using the reserved source license', async () => {
+  const { io, tags, releases, images, sourceLicenses } = fixture();
+  sourceLicenses.set(patch.sourceCommit, legacyLicense);
+  tags.push({ version: patch.version, sourceCommit: patch.sourceCommit, reservation: { runId: dispatch.runId, baseVersion: BOOTSTRAP.version } });
+  images.set(patch.version, releaseImage(patch, legacyLicense));
+
+  const request = { ...dispatch, runId: '101', dispatchCommit: nextMinor.sourceCommit };
+  const plan = await planPublication(io, request);
+  assert.equal(plan.mode, 'resume');
+  assert.equal(plan.sourceCommit, patch.sourceCommit);
+  assert.deepEqual(await preparePublication(io, request, plan), { complete: false, build: false, digest: patch.digest });
+  await finishPublication(io, request, plan, patch.digest);
+  assert.deepEqual(releases, [patch]);
+});
+
+test('refuses to plan or reserve a release with an unsupported source license', async () => {
+  const { io, tags, writes, sourceLicenses } = fixture();
+  const plan = await planPublication(io, dispatch);
+  sourceLicenses.set(patch.sourceCommit, 'UNLICENSED');
+  await assert.rejects(planPublication(io, dispatch), /supported release license/);
+  await assert.rejects(preparePublication(io, dispatch, plan), /supported release license/);
+  assert.deepEqual(tags, []);
+  assert.deepEqual(writes, []);
 });
 
 test('keeps a completed release read-only when a newer release has advanced latest', async () => {
@@ -215,7 +245,12 @@ test('blocks alias promotion when the build digest or an architecture label diff
 
   await assert.rejects(finishPublication(io, dispatch, plan, nextMinor.digest), /index digest does not match/);
   const image = images.get(patch.version);
-  image.platforms.find(platform => platform.architecture === 'arm64').labels['org.opencontainers.image.revision'] = nextMinor.sourceCommit;
+  const labels = image.platforms.find(platform => platform.architecture === 'arm64').labels;
+  labels['org.opencontainers.image.licenses'] = legacyLicense;
+  await assert.rejects(preparePublication(io, dispatch, plan), /linux\/arm64: unexpected org.opencontainers.image.licenses label/);
+  await assert.rejects(finishPublication(io, dispatch, plan, patch.digest), /linux\/arm64: unexpected org.opencontainers.image.licenses label/);
+  labels['org.opencontainers.image.licenses'] = 'MIT';
+  labels['org.opencontainers.image.revision'] = nextMinor.sourceCommit;
   await assert.rejects(preparePublication(io, dispatch, plan), /linux\/arm64: unexpected org.opencontainers.image.revision label/);
   await assert.rejects(finishPublication(io, dispatch, plan, patch.digest), /linux\/arm64: unexpected org.opencontainers.image.revision label/);
   assert.deepEqual(writes, []);

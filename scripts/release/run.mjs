@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { appendFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { assertPublishPlan, parseReservation, parseVersionTag, releasedVersions, resolveReleasePlan } from './plan.mjs';
-import { assertReleaseImage, createRegistry } from './registry.mjs';
+import { assertReleaseImage, assertReleaseLicense, createRegistry } from './registry.mjs';
 
 const repository = 'ill-yes/im-overdue';
 const image = `ghcr.io/${repository}`;
@@ -17,10 +17,15 @@ function checkedState(io, request, expected) {
   return { plan, releases: releasedVersions(snapshot) };
 }
 
+function assertSourceImage(io, info, release) {
+  const license = io.readSourceLicense(release.sourceCommit);
+  assertReleaseImage(info, { ...release, license });
+}
+
 async function publishedImage(io, release) {
   const info = await io.registry.inspect(release.version);
   if (!info) throw new Error(`Published image ${image}:${release.version} is missing.`);
-  assertReleaseImage(info, release);
+  assertSourceImage(io, info, release);
   return info;
 }
 
@@ -62,7 +67,10 @@ async function channelsToPromote(io, state, targetDigest) {
 export async function planPublication(io, request) {
   const state = checkedState(io, request);
   if (state.plan.mode === 'complete') await verifyComplete(io, state);
-  else await verifiedBaseline(io, state);
+  else {
+    assertReleaseLicense(io.readSourceLicense(state.plan.sourceCommit));
+    await verifiedBaseline(io, state);
+  }
   return state.plan;
 }
 
@@ -77,7 +85,9 @@ export async function preparePublication(io, request, expected) {
   const existing = await io.registry.inspect(plan.version);
   if (existing) {
     if (plan.mode === 'fresh') throw new Error(`GHCR tag ${plan.version} already exists without a release reservation.`);
-    assertReleaseImage(existing, plan);
+    assertSourceImage(io, existing, plan);
+  } else {
+    assertReleaseLicense(io.readSourceLicense(plan.sourceCommit));
   }
   await channelsToPromote(io, state, existing?.digest);
 
@@ -177,6 +187,11 @@ function assertAncestry({ sourceCommit, baseSourceCommit }) {
   }
 }
 
+function readSourceLicense(sourceCommit) {
+  // The workflow may be resuming a release from a different commit.
+  return JSON.parse(git('show', `${sourceCommit}:package.json`))?.license;
+}
+
 function reserveTag(plan, runId) {
   const tag = `v${plan.version}`;
   const object = githubPost(`repos/${repository}/git/tags`, {
@@ -224,7 +239,7 @@ async function main() {
     runId: env.GITHUB_RUN_ID,
     attempt: Number(env.GITHUB_RUN_ATTEMPT),
   };
-  const io = { readSnapshot, assertAncestry, reserveTag, promoteTag, publishRelease, registry: createRegistry() };
+  const io = { readSnapshot, assertAncestry, readSourceLicense, reserveTag, promoteTag, publishRelease, registry: createRegistry() };
   const action = process.argv[2];
 
   if (action === 'plan') {

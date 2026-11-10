@@ -298,14 +298,14 @@ One container runs the UI, API and SQLite on HTTP port `4317`; no database or
 other service is needed. Multi-stage builds use Node 24 on Debian Bookworm Slim
 for `linux/amd64` and `linux/arm64`. The runtime contains the built app, production
 dependencies and the small `gosu` user-switch helper. It also includes
-`/app/LICENSE`, `/app/NOTICE`, `/app/COMMERCIAL-LICENSE.md` and
+`/app/LICENSE`, `/app/NOTICE` and
 `/app/CONTRIBUTING.md`; the OCI label
-`org.opencontainers.image.licenses` is `PolyForm-Noncommercial-1.0.0`.
+`org.opencontainers.image.licenses` is `MIT`.
 Original license texts for bundled React, React DOM, Lucide and Manrope assets
 are retained in `/app/third-party-licenses`. Runtime dependencies keep their
 own license files in `/app/node_modules`.
 
-The project uses the [PolyForm Noncommercial License 1.0.0](../LICENSE).
+The project uses the [MIT License](../LICENSE).
 
 ## Next steps
 

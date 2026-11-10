@@ -172,15 +172,15 @@ try {
   const metadata = JSON.parse(await docker('image', 'inspect', image))[0];
   platform = `${metadata.Os}/${metadata.Architecture}`;
   assert.equal(metadata.Os, 'linux');
-  assert.equal(metadata.Config.Labels?.['org.opencontainers.image.licenses'], 'PolyForm-Noncommercial-1.0.0');
+  assert.equal(metadata.Config.Labels?.['org.opencontainers.image.licenses'], 'MIT');
   const bind = await directory('bind');
   const mount = `type=bind,src=${bind},dst=/data`;
   const app = await start(mount);
-  const licenseFiles = ['LICENSE', 'NOTICE', 'COMMERCIAL-LICENSE.md', 'CONTRIBUTING.md'];
+  const licenseFiles = ['LICENSE', 'NOTICE', 'CONTRIBUTING.md'];
   const expectedLicenses = Object.fromEntries(await Promise.all(licenseFiles.map(async name =>
     [name, await readFile(new URL('../' + name, import.meta.url), 'utf8')])));
   const packagedLicenses = JSON.parse(await docker('exec', '--user', '99:100', app.name, 'node', '-e',
-    'const fs=require("node:fs");const names=["LICENSE","NOTICE","COMMERCIAL-LICENSE.md","CONTRIBUTING.md"];console.log(JSON.stringify(Object.fromEntries(names.map(name=>[name,fs.readFileSync("/app/"+name,"utf8")]))))'));
+    'const fs=require("node:fs");const names=["LICENSE","NOTICE","CONTRIBUTING.md"];console.log(JSON.stringify(Object.fromEntries(names.map(name=>[name,fs.readFileSync("/app/"+name,"utf8")]))))'));
   assert.deepEqual(packagedLicenses, expectedLicenses, 'unmodified project licensing documents in the image');
   const bundledLicenses = JSON.parse(await docker('exec', '--user', '99:100', app.name, 'node', '-e',
     'const fs=require("node:fs");const names=["react.LICENSE","react-dom.LICENSE","lucide-react.LICENSE","manrope.LICENSE"];console.log(JSON.stringify(names.map(name=>fs.readFileSync("/app/third-party-licenses/"+name,"utf8"))))'));
@@ -188,7 +188,7 @@ try {
     assert.ok(text.length > 500, 'bundled dependency license must be complete, not just a URL');
     assert.match(text, /copyright/i);
   }
-  pass('PolyForm metadata, unchanged project notices and bundled UI/font licenses');
+  pass('MIT metadata, unchanged project notices and bundled UI/font licenses');
   assert.deepEqual(json(await expectStatus(app, '/api/health', 200)), { ok: true });
   for (const path of ['/api/state', '/api/backup', '/api/timesheet']) await expectStatus(app, path, 401);
   await expectStatus(app, '/api/backup', 401, { method: 'HEAD' });

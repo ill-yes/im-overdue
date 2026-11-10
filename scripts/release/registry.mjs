@@ -27,6 +27,7 @@ const digestPattern = /^sha256:[a-f0-9]{64}$/;
 const versionPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 const tagPattern = /^(latest|(0|[1-9]\d*)\.(0|[1-9]\d*)(\.(0|[1-9]\d*))?)$/;
 const architectures = ['amd64', 'arm64'];
+const releaseLicenses = ['MIT', 'PolyForm-Noncommercial-1.0.0'];
 const maxMetadataBytes = 1024 * 1024;
 
 function fail(context, reason) {
@@ -259,11 +260,18 @@ export function createRegistry({ fetchImpl = fetch } = {}) {
   };
 }
 
-export function assertReleaseImage(info, { version, sourceCommit, digest } = {}) {
+export function assertReleaseLicense(license) {
+  if (!releaseLicenses.includes(license)) {
+    throw new Error('Expected a supported release license in the source package.json.');
+  }
+}
+
+export function assertReleaseImage(info, { version, sourceCommit, digest, license } = {}) {
   if (typeof version !== 'string' || !versionPattern.test(version)
     || typeof sourceCommit !== 'string' || !/^[a-f0-9]{40}$/.test(sourceCommit)) {
     fail('release image', 'expected a stable version and full source commit SHA');
   }
+  assertReleaseLicense(license);
   if (!isDigest(info?.digest) || (digest !== undefined && info.digest !== digest)) {
     fail('release image', 'index digest does not match the expected release image');
   }
@@ -274,7 +282,7 @@ export function assertReleaseImage(info, { version, sourceCommit, digest } = {})
     'org.opencontainers.image.version': version,
     'org.opencontainers.image.revision': sourceCommit,
     'org.opencontainers.image.source': 'https://github.com/ill-yes/im-overdue',
-    'org.opencontainers.image.licenses': 'PolyForm-Noncommercial-1.0.0',
+    'org.opencontainers.image.licenses': license,
   };
   for (const architecture of architectures) {
     const platform = info.platforms.find(entry => entry?.os === 'linux' && entry.architecture === architecture);

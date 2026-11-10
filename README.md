@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://github.com/ill-yes/im-overdue/actions/workflows/ci.yml"><img src="https://github.com/ill-yes/im-overdue/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI checks on main" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-PolyForm_Noncommercial-56745C" alt="License: PolyForm Noncommercial 1.0.0" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-56745C" alt="License: MIT" /></a>
   <a href="#start-locally"><img src="https://img.shields.io/badge/Node.js-24%2B-56745C?logo=nodedotjs&amp;logoColor=white" alt="Node.js 24 or newer" /></a>
 </p>
 
@@ -154,14 +154,9 @@ links to help you find a solution when you need one.
 
 ## License
 
-I'm Overdue is source-available under the
-[PolyForm Noncommercial License 1.0.0](LICENSE)
-(`PolyForm-Noncommercial-1.0.0`), not OSI-approved open-source software. The license
-permits noncommercial use, changes and redistribution under its terms.
-
-See [NOTICE](NOTICE) for required notices, [commercial licensing](COMMERCIAL-LICENSE.md)
-for uses outside the standard license, and [contributing](CONTRIBUTING.md) for
-contribution terms.
+I'm Overdue is licensed under the [MIT License](LICENSE), including its source
+code, templates and metadata. See [NOTICE](NOTICE) for third-party license
+information and [contributing](CONTRIBUTING.md) for contribution terms.
 
 ## Support I'm Overdue
 
