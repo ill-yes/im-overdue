@@ -1,11 +1,17 @@
-# Documentation
+<a id="documentation"></a>
+
+# 📚 Documentation
 
 [English](README.md) · [Deutsch](de/README.md) · [Project home](../README.md)
 
 Start with what you want to do. You can record working time straight away;
 imported activities are optional evidence to help you remember your week.
+You enter working time yourself. Imports use files from your own exporters;
+they do not connect to calendar, Slack or GitHub APIs or create working time.
 
-## Choose your next step
+<a id="choose-your-next-step"></a>
+
+## 🧭 Choose your next step
 
 ### 🚀 Install and self-host
 
@@ -58,7 +64,9 @@ Run the project, understand its boundaries and check your changes.
 [Local import API](import-format.md#local-api) ·
 [Contribution terms](../CONTRIBUTING.md)
 
-## Find a solution
+<a id="find-a-solution"></a>
+
+## 🔎 Find a solution
 
 - **Browser address rejected?** Check the [exact configured origin](docker.md#start-with-compose).
 - **Data directory rejected at startup?** Check [allowed files and permissions](docker.md#persistent-storage-and-permissions).

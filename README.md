@@ -6,22 +6,25 @@
 
 <p align="center">
   <a href="https://github.com/ill-yes/im-overdue/actions/workflows/ci.yml"><img src="https://github.com/ill-yes/im-overdue/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI checks on main" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-56745C" alt="License: MIT" /></a>
-  <a href="#start-locally"><img src="https://img.shields.io/badge/Node.js-24%2B-56745C?logo=nodedotjs&amp;logoColor=white" alt="Node.js 24 or newer" /></a>
+  <a href="https://github.com/ill-yes/im-overdue/releases/latest"><img src="https://img.shields.io/github/v/release/ill-yes/im-overdue?style=flat&amp;label=release&amp;color=56745C" alt="Latest stable release" /></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/ill-yes/im-overdue/pkgs/container/im-overdue"><img src="https://img.shields.io/badge/container-GHCR-2496ED?logo=docker&amp;logoColor=white" alt="Public container on GHCR" /></a>
-  <a href="docs/docker.md"><img src="https://img.shields.io/badge/Docker-AMD64_%7C_ARM64-356B8C?logo=docker&amp;logoColor=white" alt="Docker: AMD64 and ARM64" /></a>
-  <a href="README.de.md"><img src="https://img.shields.io/badge/languages-English_%7C_Deutsch-475569" alt="English and Deutsch" /></a>
-  <a href="https://buymeacoffee.com/ill_yes"><img src="https://img.shields.io/badge/Buy_Me_a_Coffee-support-FFDD00?logo=buymeacoffee&amp;logoColor=000" alt="Buy Me a Coffee" /></a>
+  <a href="#start-locally"><img src="https://img.shields.io/badge/Node.js-24%2B-56745C?style=flat&amp;logo=nodedotjs&amp;logoColor=white" alt="Node.js 24 or newer" /></a>
+  <a href="docs/docker.md"><img src="https://img.shields.io/badge/Docker-AMD64_%7C_ARM64-356B8C?style=flat&amp;logo=docker&amp;logoColor=white" alt="Docker: AMD64 and ARM64" /></a>
+  <a href="https://github.com/ill-yes/im-overdue/pkgs/container/im-overdue"><img src="https://img.shields.io/badge/container-GHCR-2496ED?style=flat&amp;logo=docker&amp;logoColor=white" alt="Public container on GHCR" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-56745C?style=flat" alt="License: MIT" /></a>
+</p>
+
+<p align="center">
+  <a href="README.de.md"><img src="https://img.shields.io/badge/languages-English_%7C_Deutsch-475569?style=flat" alt="English and Deutsch" /></a>
+  <a href="https://buymeacoffee.com/ill_yes"><img src="https://img.shields.io/badge/Buy_Me_a_Coffee-support-FFDD00?style=flat&amp;logo=buymeacoffee&amp;logoColor=000" alt="Support I'm Overdue on Buy Me a Coffee" /></a>
 </p>
 
 <p align="center"><a href="README.md">English</a> · <a href="README.de.md">Deutsch</a></p>
 
 <p align="center">
-  <strong>Quick links</strong><br />
-  <a href="#start-with-docker">🚀 Get started</a> · <a href="#screenshots">👀 Take a look</a> · <a href="#features">✨ Features</a> · <a href="#first-steps">📅 How it works</a> · <a href="docs/docker.md#everyday-commands">🔧 Run & maintain</a> · <a href="#documentation">📚 Documentation</a> · <a href="#support-im-overdue">☕ Support</a>
+  <a href="#start-with-docker">🚀 Get started</a> · <a href="#screenshots">👀 Take a look</a> · <a href="#features">✨ Features</a> · <a href="#documentation">📚 Documentation</a> · <a href="#status">🧪 Status</a> · <a href="#support-im-overdue">☕ Support</a>
 </p>
 
 A busy week can be hard to piece together. I'm Overdue gives your work a
@@ -33,31 +36,32 @@ time you record yourself. Import normalized JSON/CSV files from your own
 exporters; the app does not connect to those services’ APIs. No cloud service,
 service credentials or automatic tracking.
 
-## Screenshots
+<a id="screenshots"></a>
+
+## 👀 Take a look
 
 ![The week calendar with imported evidence beside recorded working time](docs/images/week-en.png)
 
 *The real app with synthetic example data. Imported activities help you remember;
 you record working time yourself.*
 
-## Features
+<a id="features"></a>
 
-- **📅 See your week clearly.** Week and month calendars, precise time entry and
-  reusable templates.
-- **⚖️ Keep your balance.** An opening balance, editable payouts and corrections,
-  with confirmed, open and future amounts kept separate.
-- **🌿 Plan absences.** Combine vacation, time off in lieu and sickness; dated German
-  state holiday rules and individual exceptions respect your working-time target.
-- **🔌 Bring your evidence.** Named data sources with JSON/CSV assignment, previews
-  and import history.
-- **📄 Take your records with you.** Printable timesheets with an optional account
-  section, separate account CSV and SQLite backups.
-- **Choose your language.** English by default, with **English / Deutsch** on the
-  login page and in settings.
-- **Host it yourself.** One Docker container for the UI, API and SQLite; AMD64
-  and ARM64 supported.
+## ✨ What you can do
 
-## Start with Docker
+| Feature | What it does |
+| --- | --- |
+| 📅 **Your working week** | Week and month calendars, precise time entry and reusable templates. |
+| ⚖️ **Time account** | An opening balance, editable payouts and corrections; confirmed, open and future amounts stay separate. |
+| 🌿 **Absences** | Combine vacation, time off in lieu and sickness; dated German state holiday rules and individual exceptions respect your working-time target. |
+| 🔌 **Activity imports** | Bring evidence from your own normalized JSON/CSV files into named sources, with assignment, previews and import history. |
+| 📄 **Exports & backups** | Printable timesheets with an optional account section, separate account CSV and SQLite backups. |
+| 🌐 **Your language** | English by default, with **English / Deutsch** on the login page and in settings. |
+| 🏠 **Self-hosting** | One Docker container for the UI, API and SQLite, with AMD64 and ARM64 support. |
+
+<a id="start-with-docker"></a>
+
+## 🚀 Start with Docker
 
 The public image `ghcr.io/ill-yes/im-overdue:latest` includes the app and its
 database engine. Docker selects the matching AMD64 or ARM64 image.
@@ -105,7 +109,9 @@ access; HTTP sends your password and data without encryption.
 [Update an installation](docs/docker.md#change-the-password-or-update) ·
 [Back up and restore](docs/docker.md#backup-and-offline-restore)
 
-## Start locally
+<a id="start-locally"></a>
+
+## 💻 Start locally
 
 Requires Node.js 24 or newer and npm:
 
@@ -118,7 +124,9 @@ Open `http://127.0.0.1:4317`. The default local mode listens only on loopback an
 does not require a password. For a production build, run `npm run build` followed
 by `npm start`. See [development](docs/development.md) for configuration and tests.
 
-## First steps
+<a id="first-steps"></a>
+
+## 📅 First steps
 
 1. Check your time zone, weekly target and working days in settings. If applicable,
    add your German state under **Public holidays** and review local exceptions.
@@ -135,37 +143,57 @@ help you remember; they never create working time automatically.
 Follow the [working-day guide](docs/usage.md#record-a-working-day) for the detailed
 steps, including quick entry, breaks and precise times.
 
-## Documentation
+<a id="status"></a>
+
+## 🧪 Compatibility & status
+
+| Area | What to expect |
+| --- | --- |
+| Hosting | Self-hosted; one Docker container includes the UI, API and SQLite. AMD64 and ARM64 are supported. |
+| Activity imports | Your own normalized JSON/CSV exports; no direct calendar, Slack or GitHub API connection. |
+| Time tracking | You record working time yourself. Imported activities never create working time automatically. |
+| Checks & releases | [CI checks](https://github.com/ill-yes/im-overdue/actions/workflows/ci.yml) run on `main` and pull requests. [Releases](https://github.com/ill-yes/im-overdue/releases) are published through the manual release workflow. |
+
+<a id="documentation"></a>
+
+## 📚 Find your way
 
 Start with what you want to do:
 
-- **🚀 Install and self-host:** [Docker and Unraid](docs/docker.md).
-- **🔧 Keep it running:** [everyday commands](docs/docker.md#everyday-commands),
-  [updates](docs/docker.md#change-the-password-or-update) and
-  [backups](docs/docker.md#backup-and-offline-restore).
-- **📅 Record and review your time:** [Using I'm Overdue](docs/usage.md).
-- **⚖️ Manage your account and absences:** [Hours account](docs/usage.md#hours-account),
-  [absences](docs/usage.md#absences) and [public holidays](docs/usage.md#public-holidays).
-- **🔌 Prepare activity imports:** [JSON/CSV format and exporter guide](docs/import-format.md).
-- **🛠️ Develop and contribute:** [Development](docs/development.md).
+| I want to… | Start here |
+| --- | --- |
+| 🚀 Install and self-host | [Docker and Unraid](docs/docker.md). |
+| 🔧 Keep it running | [Everyday commands](docs/docker.md#everyday-commands), [updates](docs/docker.md#change-the-password-or-update) and [backups](docs/docker.md#backup-and-offline-restore). |
+| 📅 Record and review my time | [Using I'm Overdue](docs/usage.md). |
+| ⚖️ Manage my account and absences | [Hours account](docs/usage.md#hours-account), [absences](docs/usage.md#absences) and [public holidays](docs/usage.md#public-holidays). |
+| 🔌 Prepare activity imports | [JSON/CSV format and exporter guide](docs/import-format.md). |
+| 🛠️ Develop and contribute | [Development](docs/development.md). |
 
 The [documentation home](docs/README.md) brings these paths together, with quick
 links to help you find a solution when you need one.
 
-## License
+<a id="development"></a>
+
+## 🛠️ Develop & contribute
+
+The [developer guide](docs/development.md) covers local configuration, builds and
+tests. Read the [contribution guide](CONTRIBUTING.md) before proposing a change.
+Report bugs and ideas in [GitHub Issues](https://github.com/ill-yes/im-overdue/issues).
+Please report security issues privately as described in the [security policy](SECURITY.md).
+
+<a id="license"></a>
+
+## 📄 License
 
 I'm Overdue is licensed under the [MIT License](LICENSE), including its source
 code, templates and metadata. See [NOTICE](NOTICE) for third-party license
 information and [contributing](CONTRIBUTING.md) for contribution terms.
 
-## Support I'm Overdue
+<a id="support-im-overdue"></a>
 
-Found a bug, have an idea, or want to help improve the app? Head to
-[GitHub Issues](https://github.com/ill-yes/im-overdue/issues), or read the
-[contribution guide](CONTRIBUTING.md). Please report security issues privately as
-described in the [security policy](SECURITY.md).
+## ☕ Support I'm Overdue
 
 If I'm Overdue makes your week a little easier, you can buy me a coffee.
 Support is entirely optional. Thank you for spending some of your time here.
 
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy_Me_a_Coffee-support-FFDD00?logo=buymeacoffee&logoColor=000)](https://buymeacoffee.com/ill_yes)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy_Me_a_Coffee-support-FFDD00?style=flat&logo=buymeacoffee&logoColor=000)](https://buymeacoffee.com/ill_yes)

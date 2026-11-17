@@ -1,11 +1,18 @@
-# Dokumentation
+<a id="dokumentation"></a>
+
+# 📚 Dokumentation
 
 [English](../README.md) · [Deutsch](README.md) · [Projektstartseite](../../README.de.md)
 
 Starte mit dem, was du erledigen möchtest. Du kannst direkt Arbeitszeit erfassen;
 importierte Aktivitäten sind optionale Belege, die beim Erinnern an die Woche helfen.
+Du erfasst Arbeitszeit selbst. Importe verwenden Dateien aus deinen eigenen
+Exportern; sie verbinden sich nicht mit Kalender-, Slack- oder GitHub-APIs und
+erzeugen keine Arbeitszeit.
 
-## Wähle deinen nächsten Schritt
+<a id="wähle-deinen-nächsten-schritt"></a>
+
+## 🧭 Wähle deinen nächsten Schritt
 
 ### 🚀 Installieren und selbst hosten
 
@@ -58,7 +65,9 @@ Starte das Projekt, lerne seine Grenzen kennen und prüfe deine Änderungen.
 [Lokale Import-API](import-format.md#lokale-api) ·
 [Beitragsbedingungen](../../CONTRIBUTING.md)
 
-## Schnell Hilfe finden
+<a id="schnell-hilfe-finden"></a>
+
+## 🔎 Schnell Hilfe finden
 
 - **Browseradresse abgewiesen?** Prüfe die [genau konfigurierte Origin](docker.md#mit-compose-starten).
 - **Datenverzeichnis beim Start abgewiesen?** Prüfe [erlaubte Dateien und Rechte](docker.md#persistente-daten-und-rechte).
